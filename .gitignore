@@ -1,0 +1,47 @@
+# Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Virtual environment directory
+venv/
+env/
+.venv/
+
+# Django migrations
+*/migrations/*
+!*/migrations/__init__.py
+
+# Django secret key (only if you haven't externalized it)
+*.env
+
+# Django media files
+media/
+
+# Logs
+*.log
+
+# Test, coverage, and other temp files
+*.cover
+*.hypothesis/
+*.tox/
+*.nox/
+*.coverage
+*.coverage.*
+nosetests.xml
+coverage.xml
+*.hypothesis/
+
+# IDE/editor specific files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# MacOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db

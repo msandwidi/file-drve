@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahel Box | Message reçu{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 text-[#027991]">Message reçu</h1>
+
+    <p class="text-lg text-gray-600 max-w-2xl">Merci pour votre message. Nous l'avons bien reçu et nous y travaillons
+        actuellement. Nous reviendrons vers vous dès que possible.</p>
+</div>
+
+<a href="{% url 'home' %}"
+    class="mt-8 hover:bg-[#E1ECF0] border border-[#027991] text-[#027991] font-semibold py-1 px-4 text-md">Retour à la
+    page
+    d'accueil</a>
+
+{% endblock %}

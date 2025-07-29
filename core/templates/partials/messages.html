@@ -1,0 +1,21 @@
+{% if messages %}
+<div id="toast-container" class="fixed top-5 right-5 z-50 space-y-2">
+    {% for message in messages %}
+    <div class="toast-message rounded-md px-4 py-2 text-sm shadow-lg
+        {% if message.tags == 'success' %} bg-green-100 text-green-800
+        {% elif message.tags == 'error' %} bg-red-100 text-red-800
+        {% elif message.tags == 'warning' %} bg-yellow-100 text-yellow-800
+        {% else %} bg-blue-100 text-blue-800 {% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    setTimeout(() => {
+        document.querySelectorAll('.toast-message').forEach(el => {
+            el.style.display = 'none';
+        });
+    }, 5000);
+</script>
+{% endif %}

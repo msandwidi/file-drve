@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahel Box | Introuvable{% endblock %}
+
+{% block content %}
+
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 text-[#027991]">404 - Not Found</h1>
+
+<div class="my-6">
+    <p class="text-lg text-gray-600">{{description}}</p>
+
+    <div class="mt-4">
+        <a href="{% url 'my-box' %}">Contacts</a>
+    </div>
+</div>
+    
+{% endblock %}

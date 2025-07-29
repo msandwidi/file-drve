@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahel Box | Mon Compte{% endblock %}
+
+{% block content %}
+
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 text-[#027991]">Mon Compte</h1>
+
+<table class="min-w-full border-b border-gray-300 mt-6">
+    <tbody class="bg-white">
+        <tr class="shadow shadow-sm">
+            <td class="px-4 py-2 text-md text-gray-600">Nom</td>
+            <td class="px-4 py-2 text-md text-gray-600">{{user.first_name|default:''}}
+                {{user.last_name|default:''}}</td>
+        </tr>
+        <tr class="shadow shadow-sm">
+            <td class="px-4 py-2 text-md text-gray-600">Nom d’utilisateur</td>
+            <td class="px-4 py-2 text-md text-gray-600">{{user.username}}</td>
+        </tr>
+        <tr class="shadow shadow-sm">
+            <td class="px-4 py-2 text-md text-gray-600">Adress e-mail</td>
+            <td class="px-4 py-2 text-md text-gray-600">{{user.email}}</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="my-6">
+    <form action="{% url 'my-profile' %}" method="post">
+        {% csrf_token %}
+        <button class="bg-[#027991] hover:bg-[#016073] text-white py-2 px-3">
+            Mettre à jour le compte
+        </button>
+    </form>
+</div>
+{% endblock %}

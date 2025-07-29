@@ -1,0 +1,96 @@
+<nav class="bg-white shadow-md">
+  <div class="mx-auto px-4">
+    <div class="flex justify-between h-16">
+      <div class="flex">
+        <div class="flex-shrink-0 flex items-center text-xl font-bold text-[#027991]">
+          <a href="{% url 'home' %}">Sahel Box</a>
+        </div>
+
+        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+          {% if user.is_authenticated %}
+          <a href="{% url 'my-box' %}" class="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-600">Mes
+            Contacts</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right Section (added) -->
+      <div class="hidden sm:flex sm:items-center sm:space-x-4">
+
+        {% if not user.is_authenticated %}
+
+        {% if not hide_signin_btn %}
+        <a href="{% url 'login' %}"
+          class="bg-[#027991] hover:bg-[#016073] text-white border-2 border-[#027991] px-3 py-1 font-medium">Connecter</a>
+        {% endif %}
+
+        {% if not hide_signup_btn %}
+        <a href="{% url 'signup' %}"
+          class="bg-[#027991] hover:bg-[#016073] text-white border-2 border-[#027991] px-3 py-1 font-medium">S'inscrire</a>
+        {% endif %}
+
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <div class="relative group inline-block">
+          <button class="text-gray-700 hover:text-blue-600">Profil ▾</button>
+
+          <!-- Dropdown -->
+          <div class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md
+            opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-150 z-10">
+            <a href="{% url 'my-profile' %}" class="block px-4 py-2 text-sm hover:bg-gray-100">Mon Profil</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Déconnecter</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Mobile menu button (unchanged) -->
+      <div class="flex items-center sm:hidden">
+        <button id="menu-btn" class="text-[#027991] hover:text-[#016073] focus:outline-none">
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden sm:hidden px-4 pb-4">
+
+    {% if user.is_authenticated %}
+    <a href="{% url 'my-box' %}" class="block text-gray-900 py-2 hover:text-blue-600">Mes Contacts</a>
+    <a href="{% url 'my-profile' %}" class="block text-gray-900 py-2 hover:text-blue-600">Mon Profil</a>
+    <a href="{% url 'logout' %}" class="block text-red-500 py-2 hover:text-blue-600">Deconnecter</a>
+    {% endif %}
+
+    {% if not user.is_authenticated %}
+
+    {% if not hide_signin_btn %}
+    <a href="{% url 'login' %}" class="block text-gray-900 py-2 hover:text-blue-600">Connecter</a>
+    {% endif %}
+
+    {% if not hide_signup_btn %}
+    <a href="{% url 'signup' %}" class="block text-gray-900 py-2 hover:text-blue-600">S'inscrire</a>
+    {% endif %}
+
+    {% endif %}
+
+  </div>
+</nav>
+
+{% include 'partials/messages.html' %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("menu-btn");
+    const menu = document.getElementById("mobile-menu");
+
+    if (toggleBtn && menu) {
+      toggleBtn.addEventListener("click", function () {
+        menu.classList.toggle("hidden");
+      });
+    }
+  })
+</script>

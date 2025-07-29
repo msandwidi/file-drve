@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ua-parser = {extras = ["regex"], version = "*"}
+gunicorn = "*"
+whitenoise = "*"
+python-decouple = "*"
+requests = "*"
+cryptography = "*"
+django = "*"
+pyjwt = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
