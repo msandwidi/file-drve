@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahel Box | Corbeille{% endblock %}
+
+{% block content %}
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 text-[#027991]">Corbeille</h1>
+
+<div>
+    <table class="min-w-full border-b border-gray-300" id="file-table">
+        <thead class="bg-gray-200">
+            <tr>
+                <th class="px-4 py-2 text-left text-md text-gray-700 font-bold border-l-2 border-gray-200">
+                    Nom</th>
+                <th class="w-[27%] md:w-[25%]  px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                    Type
+                </th>
+                <th class="px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                    Taille
+                </th>
+                <th class="w-[25%] px-4 py-2 text-left text-md text-gray-700 font-bold">
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody class="bg-white">
+
+            {% for file in files %}
+
+            <tr class="shadow shadow-sm group">
+                <td class="px-4 py-2 text-md text-gray-600">
+                    <a href="#" class="text-[#027991] font-semibold text-md mr-2">
+                        {{ file.name }}
+                    </a>
+                </td>
+                <td class="px-4 py-4 text-md text-gray-700 text-right">
+                    {{file.type}}
+                </td>
+                <td class="px-4 py-4 text-md text-gray-700 text-right">
+                    {{file.size}}
+                </td>
+                <td class="px-4 py-4 text-md text-gray-700">
+                    ...
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+    </table>
+
+    {% if files %}
+    <div class="mt-4 flex gap-2">
+        {% if files.has_previous %}
+        <a href="?page={{ files.previous_page_number }}#file-table"
+            class="px-2 py-1 mr-3 border border-gray-200 text-gray-600 text-sm">Page Précédente</a>
+        {% endif %}
+
+        <span class="mr-3 py-1 text-gray-600 text-sm ">Page {{ files.number }} sur
+            {{files.paginator.num_pages }}</span>
+
+        {% if files.has_next %}
+        <a href="?page={{ files.next_page_number }}#file-table"
+            class="px-2 py-1 border border-gray-200 text-gray-600 text-sm">Page Suivante</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

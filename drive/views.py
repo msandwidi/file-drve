@@ -66,3 +66,7 @@ def file_details_view(request, file_id):
     return render(request, 'file/file-details.html', {
         'file': file
     })
+
+
+def trash_bin_view(request):
+    return render(request, 'drive/trash-bin.html')
