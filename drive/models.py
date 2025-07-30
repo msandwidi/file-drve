@@ -41,7 +41,7 @@ class FileRecord(models.Model):
     folder = models.ForeignKey(
         'drive.FolderRecord', 
         on_delete=models.SET_NULL, 
-        related_name='folder',
+        related_name='files',
         null=True,
         blank=True,
     )

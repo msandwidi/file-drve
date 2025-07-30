@@ -40,23 +40,25 @@ def my_drive_view(request):
         ).order_by('-last_accessed_at')
         
     elif folder:
-        files = FileRecord.objects.filter(
-            user=request.user,
-            is_deleted=False,
-            folder=folder
-        )
+        # folder files
+        files = folder.files.all()
+        
+        folders = folder.subfolders.all()
         
     else:
+        # root files
         files = FileRecord.objects.filter(
             user=request.user,
             is_deleted=False,
+            folder=None
         )
 
-    # my folders
-    folders = FolderRecord.objects.filter(
-        is_deleted=False,
-        user=request.user
-    )
+        # root folders
+        folders = FolderRecord.objects.filter(
+            is_deleted=False,
+            user=request.user,
+            parent=None
+        )
         
     paginator = Paginator(files, page_size) 
     page_obj = paginator.get_page(page)
