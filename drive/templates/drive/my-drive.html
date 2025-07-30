@@ -1,65 +1,97 @@
-{% extends 'base2.html' %}
+{% extends 'base.html' %}
 
-{% block title %}Sahel Box | Mon Compte{% endblock %}
+{% block title %}Sahel Box | Votre boîte à fichiers{% endblock %}
 
 {% block content %}
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 text-[#027991]">Mes Fichiers</h1>
 
- <!-- Mobile navbar -->
-    <header class="md:hidden flex items-center justify-between p-4 bg-white shadow">
-        <div class="text-xl font-bold">Sahel Box</div>
-        <button id="menu-toggle" class="text-gray-700 focus:outline-none">
-            <i data-lucide="menu" class="w-6 h-6"></i>
-        </button>
-    </header>
 
-    <!-- Backdrop overlay (mobile only) -->
-    <div id="backdrop" class="fixed inset-0 bg-black bg-opacity-40 z-40 hidden md:hidden"></div>
 
-    <div class="flex h-screen overflow-hidden">
-
-        <!-- Sidebar -->
-        <aside id="sidebar"
-            class="fixed inset-y-0 left-0 w-64 bg-white shadow-md transform -translate-x-full md:translate-x-0 md:relative md:transform-none transition-transform duration-200 ease-in-out z-50">
-            <div class="p-6 text-xl font-bold border-b">Sahel Box</div>
-            <nav class="flex flex-col px-4 py-6 space-y-2">
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
-                    <i data-lucide="home" class="w-5 h-5"></i>
-                    <span>Fichiers récents</span>
-                </a>
-                <a href="{% url 'my-box' %}" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
-                    <i data-lucide="archive" class="w-5 h-5"></i>
-                    <span>Tous mes fichiers</span>
-                </a>
-                <a href="{% url 'my-profile' %}" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
-                    <i data-lucide="user" class="w-5 h-5"></i>
-                    <span>Mon Profil</span>
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Main content -->
-        <main class="flex-1 p-6 overflow-auto ml-0">
-            <h1 class="text-3xl font-semibold">Mes Fichiers</h1>
-            <p class="mt-4 text-gray-600">This is your main content area.</p>
-        </main>
-
+<div>
+    <div class="grid lg:grid-cols-2 md:grid-cols-1 gap-4">
+        <div class="w-full">
+            <form action="#" method="POST" class="flex items-center w-full">
+                {% csrf_token %}
+                <input type="text" name="search_term"
+                    placeholder="Entrer le code du lien ici (xxxxx..) ou le lien original"
+                    class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 text-sm outline-none" required
+                    maxlength="1500" />
+                <button type="submit"
+                    class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-2 font-semibold">
+                    Chercher
+                </button>
+            </form>
+        </div>
     </div>
 
-    <script>
-        lucide.createIcons();
+    <div class="p-4 grid lg:grid-cols-[1fr_3fr] md:grid-cols-1 gap-4">
+        <div>
+            folder list go here
+        </div>
+        <div>
+            <table class="min-w-full border-b border-gray-300 mt-6" id="file-table">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-md text-gray-700 font-bold border-l-2 border-gray-200">
+                            Nom</th>
+                        <th class="w-[27%] md:w-[25%]  px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                            Type
+                        </th>
+                        <th class="px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                            Taille
+                        </th>
+                        <th class="w-[25%] px-4 py-2 text-left text-md text-gray-700 font-bold">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
 
-        const toggle = document.getElementById('menu-toggle');
-        const sidebar = document.getElementById('sidebar');
-        const backdrop = document.getElementById('backdrop');
+                    {% for file in files %}
 
-        toggle.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            backdrop.classList.toggle('hidden');
-        });
+                    <tr class="shadow shadow-sm group">
+                        <td class="px-4 py-2 text-md text-gray-600">
+                            <a href="#" class="text-[#027991] font-semibold text-md mr-2">
+                                {{ file.name }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-4 text-md text-gray-700 text-right">
+                            {{file.type}}
+                        </td>
+                        <td class="px-4 py-4 text-md text-gray-700 text-right">
+                            {{file.size}}
+                        </td>
+                        <td class="px-4 py-4 text-md text-gray-700">
+                            ...
+                        </td>
+                    </tr>
 
-        backdrop.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            backdrop.classList.add('hidden');
-        });
-    </script>
-{% endblock %}
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+            <!-- Pagination controls -->
+            {% if files %}
+            <div class="mt-4 flex gap-2">
+                {% if files.has_previous %}
+                <a href="?page={{ files.previous_page_number }}#file-table"
+                    class="px-2 py-1 mr-3 border border-gray-200 text-gray-600 text-sm">Page Précédente</a>
+                {% endif %}
+
+                <span class="mr-3 py-1 text-gray-600 text-sm ">Page {{ files.number }} sur
+                    {{files.paginator.num_pages }}</span>
+
+                {% if files.has_next %}
+                <a href="?page={{ files.next_page_number }}#file-table"
+                    class="px-2 py-1 border border-gray-200 text-gray-600 text-sm">Page Suivante</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+
+    {% endblock %}
