@@ -1,7 +1,10 @@
+from django.views.decorators.http import require_http_methods
 from django.shortcuts import render, redirect
-from core.utils import is_valid_int
-from django.core.paginator import Paginator
 from .models import FileRecord, FolderRecord
+from django.core.paginator import Paginator
+from django.contrib import messages
+from core.utils import is_valid_int
+from django.urls import reverse
 
 def my_drive_view(request):
     """
@@ -23,13 +26,20 @@ def my_drive_view(request):
     folder_id = request.GET.get('dossier')
     folder = None
     
-    if folder_id:
+    if is_valid_int(folder_id):
         folder = FolderRecord.objects.filter(
+            id=folder_id,
             user=request.user,
             is_deleted=False,
         ).first()
+    
+    if folder_id == 'fichiers-recents':
+        files = FileRecord.objects.filter(
+            user=request.user,
+            is_deleted=False,
+        ).order_by('-last_accessed_at')
         
-    if folder:
+    elif folder:
         files = FileRecord.objects.filter(
             user=request.user,
             is_deleted=False,
@@ -43,16 +53,19 @@ def my_drive_view(request):
         )
 
     # my folders
-    folders = FolderRecord.objects.filter()
+    folders = FolderRecord.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )
         
     paginator = Paginator(files, page_size) 
     page_obj = paginator.get_page(page)
     
     return render(request, 'drive/my-drive.html', {
         'files': page_obj,
-        'folders': folders
+        'folders': folders,
+        'folder': folder,
     })
-
 
 def file_details_view(request, file_id):
     """
@@ -61,7 +74,8 @@ def file_details_view(request, file_id):
     
     file = FileRecord.objects.filter(
         id=file_id,
-        is_deleted=False
+        is_deleted=False,
+        user=request.user
     ).first()
     
     if not file:
@@ -71,11 +85,42 @@ def file_details_view(request, file_id):
         'file': file
     })
 
+@require_http_methods(['POST'])
 def create_folder_view(request):
     """
     Create a new folder
     """
-    return render(request, 'drive/new-folder.html')
+    
+    folder_id = request.GET.get('dossier')
+    folder = None
+    
+    if folder_id:
+        folder = FolderRecord.objects.filter(
+            user=request.user,
+            is_deleted=False,
+        ).first()
+        
+        if not folder:
+            messages.warning(request, 'Dossier introuvable')
+            return redirect('my-box')
+        
+    name = request.POST.get('name')
+    
+    if not name:
+        messages.warning(request, 'Erreur')
+        return redirect('my-box')
+    
+    description = request.POST.get('description')
+    
+    new_folder = FolderRecord.objects.create(
+        name=name,
+        description=description,
+        parent=folder,
+        user=request.user
+    )
+    
+    url = reverse('my-box')
+    return redirect(f"{url}?dossier-{new_folder.id}")
 
 def trash_bin_view(request):
     return render(request, 'drive/trash-bin.html')

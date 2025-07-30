@@ -179,9 +179,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'fr'  # Set default language to French
 USE_I18N = True       # Enable internationalization
 LANGUAGES = [('fr', 'Français')]
-TIME_ZONE = 'UTC'
+#TIME_ZONE = 'UTC'
 USE_L10N = True
-USE_TZ = True
+USE_TZ = False
 
 LOGIN_URL = '/comptes/sso/connexion'
 

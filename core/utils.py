@@ -5,6 +5,9 @@ def is_valid_int(s):
     is avalid int or not
     """
     
+    if not s:
+        return False
+    
     try:
         int(s)
         return True

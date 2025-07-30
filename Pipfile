@@ -14,6 +14,7 @@ django = "*"
 pyjwt = "*"
 
 [dev-packages]
+tzdata = "*"
 
 [requires]
 python_version = "3.12"

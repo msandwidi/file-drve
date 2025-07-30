@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
-from django.utils.timezone import now
+from django.utils import timezone
 from django.db import models
 import uuid
 import os
@@ -9,7 +9,7 @@ def user_directory_path(instance, filename):
     base, ext = os.path.splitext(filename)
     safe_name = slugify(base)  
     
-    timestamp = now().strftime("%Y%m%d%H%M%S")
+    timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
     final_name = f"{timestamp}_{safe_name}{ext.lower()}"
 
     if instance.folder:
@@ -34,7 +34,17 @@ class FileRecord(models.Model):
     download_limit = models.IntegerField(null=True, blank=True)
     download_count = models.PositiveIntegerField(default=0)
 
+    last_accessed_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    
     expires_at = models.DateTimeField(null=True, blank=True)
+    
+    folder = models.ForeignKey(
+        'drive.FolderRecord', 
+        on_delete=models.SET_NULL, 
+        related_name='folder',
+        null=True,
+        blank=True,
+    )
     
     user = models.ForeignKey(
         get_user_model(), 
@@ -65,7 +75,7 @@ class FileRecord(models.Model):
 
 class FolderRecord(models.Model):
     name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
+    description = models.CharField(max_length=255, null=True, blank=True)
     
     is_public = models.BooleanField(default=False)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
@@ -93,7 +103,8 @@ class FolderRecord(models.Model):
 
     class Meta:
         unique_together = ('user', 'parent', 'name')  # prevent duplicate folder names within same parent
-
+        ordering = ['name']
+        
     def __str__(self):
         return self.name
     

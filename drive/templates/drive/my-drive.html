@@ -92,18 +92,20 @@
         </div>
         <div id="right-pane">
             {% if folder %}
-            <div id="folder-details">
+            <div id="folder-details" class="mb-4">
                 <table class="min-w-full border-b border-gray-300">
-                    <thead class="bg-[#ffd500]">
+                    <thead class="bg-[#90caf9]">
                         <tr>
                             <th class="px-4 py-2 text-left text-md font-semibold border-l-2 border-gray-200">
-                                <div class="flex items-center space-x-2">
-                                    <a href="#">{{folder.name}}</a>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                    </svg>
+                                <div>
+                                    <a href="#" class="flex items-center space-x-2 justify-between">
+                                        <span>{{folder.name}}</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </a>
                                 </div>
                             </th>
                         </tr>
@@ -142,16 +144,6 @@
 
                     </tbody>
                 </table>
-
-                <div class="flex space-x-4 mt-4">
-                    <a href="#" class="border border-gray-600 px-3 py-1 text-gray-600 hover:bg-gray-50">Modifier</a>
-
-                    <form action="#">
-                        {% csrf_token %}
-                        <button type="submit"
-                            class="border border-red-500 px-3 py-1 text-red-500 hover:bg-red-50">Supprimer</button>
-                    </form>
-                </div>
             </div>
             {% endif %}
 
@@ -159,7 +151,7 @@
                 <tbody class="bg-white">
                     <tr class="shadow shadow-sm group hover:bg-gray-50">
                         <td class="px-2 py-1 text-sm text-gray-600">
-                            <a href="{% url 'recent-files' %}"
+                            <a href="{% url 'my-box' %}?dossiers=fichiers-recents"
                                 class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke-width="1.5" stroke="#2196f3" class="w-4 h-4">
@@ -209,7 +201,7 @@
             <div id="my-folders">
 
                 {% if folders %}
-                <table class="min-w-full border-b border-gray-300">
+                <table class="min-w-full border-b border-gray-300 mt-4">
                     <thead class="bg-[#ffd500]">
                         <tr>
                             <th class="px-4 py-2 text-left text-md font-semibold border-l-2 border-gray-200">
@@ -222,7 +214,7 @@
                         {% for my_folder in folders %}
                         <tr class="shadow shadow-sm group hover:bg-gray-50">
                             <td class="px-2 py-1 text-sm text-gray-600">
-                                <a href="{% url 'my-box' %}"
+                                <a href="{% url 'my-box' %}?dossier={{my_folder.id}}"
                                     class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="#027991" class="w-4 h-4">
@@ -230,7 +222,7 @@
                                             d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                                     </svg>
 
-                                    <span>Tous mes fichiers</span>
+                                    <span>{{my_folder.name}}</span>
                                 </a>
                             </td>
                         </tr>
@@ -242,7 +234,33 @@
 
                 <div class="mt-4">
 
-                    <button type="button" id="showAddFolderDialog"
+                    <dialog id="addNewFolderDialog"
+                        class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
+                        <form method="post" action="{% url 'new-folder' %}">
+                            {% csrf_token %}
+
+                            <h2 class="text-xl font-bold mb-4">Ajouter un Nouveau Dossier</h2>
+                            <div>
+                                <div class="mb-2">
+                                    <label class="block text-gray-600 text-sm font-semibold mb-2" for="name">
+                                        Nom du Dossier
+                                    </label>
+                                    <input
+                                        class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
+                                        id="name" name="name" type="text" maxlength="30"
+                                        placeholder="Nom du Nouveau Dossier" required>
+                                </div>
+                            </div>
+
+                            <button type="button" id="closeNewFolderBtn"
+                                class="mr-4 border-4 border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-semibold py-1.5 px-4">Annuler</button>
+
+                            <button type="submit"
+                                class="mt-4 bg-gray-900 hover:bg-black text-white font-bold py-2 px-4 border border-black">Sauvegarder</button>
+                        </form>
+                    </dialog>
+
+                    <button type="button" id="addNewFolderBtn"
                         class="text-sm border border-[#027991] text-[#027991] px-4 py-0.5">Ajouter un
                         dossier</button>
                 </div>
