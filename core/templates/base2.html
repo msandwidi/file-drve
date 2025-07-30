@@ -1,0 +1,27 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="{% static 'js/twcss.js' %}"></script>
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>{% block title %}Default Title{% endblock %}</title>
+</head>
+
+<body class="min-h-screen flex flex-col bg-[#F0F4F5]">
+
+    {% include 'partials/navbar.html' %}
+
+
+    {% block content %}{% endblock %}
+
+
+    {% include 'partials/footer.html' %}
+
+</body>
+
+</html>
