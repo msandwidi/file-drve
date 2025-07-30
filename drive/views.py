@@ -35,18 +35,22 @@ def my_drive_view(request):
             is_deleted=False,
             folder=folder
         )
-         
+        
     else:
         files = FileRecord.objects.filter(
             user=request.user,
             is_deleted=False,
         )
+
+    # my folders
+    folders = FolderRecord.objects.filter()
         
     paginator = Paginator(files, page_size) 
     page_obj = paginator.get_page(page)
     
     return render(request, 'drive/my-drive.html', {
-        'files': page_obj
+        'files': page_obj,
+        'folders': folders
     })
 
 
@@ -67,6 +71,11 @@ def file_details_view(request, file_id):
         'file': file
     })
 
+def create_folder_view(request):
+    """
+    Create a new folder
+    """
+    return render(request, 'drive/new-folder.html')
 
 def trash_bin_view(request):
     return render(request, 'drive/trash-bin.html')

@@ -90,7 +90,71 @@
             {% endif %}
 
         </div>
-        <div>
+        <div id="right-pane">
+            {% if folder %}
+            <div id="folder-details">
+                <table class="min-w-full border-b border-gray-300">
+                    <thead class="bg-[#ffd500]">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-md font-semibold border-l-2 border-gray-200">
+                                <div class="flex items-center space-x-2">
+                                    <a href="#">{{folder.name}}</a>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+
+                        <tr class="shadow shadow-sm group">
+                            <td class="px-4 py-2 text-md text-gray-600">
+                                <div class="flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                    </svg>
+                                    <span>{{ folder.name }}</span>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% if folder.description %}
+                        <tr class="shadow shadow-sm group">
+                            <td class="px-4 py-2 text-md text-gray-600">
+                                <div class="flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                    </svg>
+
+
+                                    <span>{{folder.description}}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                    </tbody>
+                </table>
+
+                <div class="flex space-x-4 mt-4">
+                    <a href="#" class="border border-gray-600 px-3 py-1 text-gray-600 hover:bg-gray-50">Modifier</a>
+
+                    <form action="#">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="border border-red-500 px-3 py-1 text-red-500 hover:bg-red-50">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
             <table class="min-w-full border-b border-gray-300">
                 <tbody class="bg-white">
                     <tr class="shadow shadow-sm group hover:bg-gray-50">
@@ -141,6 +205,48 @@
 
                 </tbody>
             </table>
+
+            <div id="my-folders">
+
+                {% if folders %}
+                <table class="min-w-full border-b border-gray-300">
+                    <thead class="bg-[#ffd500]">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-md font-semibold border-l-2 border-gray-200">
+                                Mes dossiers
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+
+                        {% for my_folder in folders %}
+                        <tr class="shadow shadow-sm group hover:bg-gray-50">
+                            <td class="px-2 py-1 text-sm text-gray-600">
+                                <a href="{% url 'my-box' %}"
+                                    class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="#027991" class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                                    </svg>
+
+                                    <span>Tous mes fichiers</span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+                {% endif %}
+
+                <div class="mt-4">
+
+                    <button type="button" id="showAddFolderDialog"
+                        class="text-sm border border-[#027991] text-[#027991] px-4 py-0.5">Ajouter un
+                        dossier</button>
+                </div>
+            </div>
 
         </div>
     </div>
