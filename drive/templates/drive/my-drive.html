@@ -236,7 +236,7 @@
 
                     <dialog id="addNewFolderDialog"
                         class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-                        <form method="post" action="{% url 'new-folder' %}">
+                        <form method="post" action="{% url 'new-folder' %}{% if folder %}?dossier={{folder.id}}{% endif %}">
                             {% csrf_token %}
 
                             <h2 class="text-xl font-bold mb-4">Ajouter un Nouveau Dossier</h2>

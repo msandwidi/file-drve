@@ -96,7 +96,7 @@ def create_folder_view(request):
     folder_id = request.GET.get('dossier')
     folder = None
     
-    if folder_id:
+    if is_valid_int(folder_id):
         folder = FolderRecord.objects.filter(
             user=request.user,
             is_deleted=False,
