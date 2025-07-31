@@ -13,7 +13,7 @@
         </button>
     </div>
 
-    <div class="grid md:grid-cols-[5fr_1fr] sm:grid-cols-1 gap-2 mt-4">
+    <div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
         <div class="w-full">
             <form action="#" method="POST" class="flex items-center w-full">
                 {% csrf_token %}
@@ -28,62 +28,82 @@
         </div>
     </div>
 
-    <div class="grid md:grid-cols-[5fr_1fr] sm:grid-cols-1 gap-2 mt-4">
+    <div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
         <div>
             <table class="min-w-full border-b border-gray-300" id="file-table">
                 <thead class="bg-gray-200">
                     <tr>
-                        <th class="px-4 py-2 text-left text-md text-gray-700 font-bold border-l-2 border-gray-200">
-                            Nom</th>
-                        <th class="w-[27%] md:w-[25%]  px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                        <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
+                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home</a>/ {% for path_data in folder.full_path_data %}<a
+                                href="{% url 'my-box' %}?dossier={{path_data.id}}"
+                                class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %}
+                                /{%endif%}</a>{% endfor %}</th>
+                        <th class="w-[20%] md:w-[12%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Type
                         </th>
-                        <th class="px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                        <th
+                            class="w-[20%] md:w-[12%] px-4 py-2 text-left text-md text-gray-600 font-semibold text-right">
                             Taille
                         </th>
-                        <th class="w-[25%] px-4 py-2 text-left text-md text-gray-700 font-bold">
+                        <th class="w-[25%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Actions
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
 
-                    {% for file in files %}
-
-                    <tr class="shadow shadow-sm group">
+                    {% for item in page_data %}
+                    <tr class="shadow shadow-sm group hover:bg-gray-50">
                         <td class="px-4 py-2 text-md text-gray-600">
-                            <a href="#" class="text-[#027991] font-semibold text-md mr-2">
-                                {{ file.name }}
-                            </a>
-                        </td>
-                        <td class="px-4 py-4 text-md text-gray-700 text-right">
-                            {{file.type}}
-                        </td>
-                        <td class="px-4 py-4 text-md text-gray-700 text-right">
-                            {{file.size}}
-                        </td>
-                        <td class="px-4 py-4 text-md text-gray-700">
-                            ...
-                        </td>
-                    </tr>
+                            <div>
+                                {% if item.type == 'folder' %}
+                                <a href="{% url 'my-box' %}?dossier={{item.id}}"
+                                    class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
 
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                        class="h-4 w-4 shrink-0">
+                                        <path
+                                            d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
+                                    </svg>
+
+                                    <span>{{item.display_name}}</span>
+                                </a>
+                                {% else %}
+                                <a href="{% url 'file-details' item.id %}"
+                                    class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                        class="h-4 w-4 shrink-0">
+                                        <path
+                                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                                        <path
+                                            d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                                    </svg>
+                                    <span>{{item.display_name}}</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-2 text-md text-gray-600">{{item.display_type}}</td>
+                        <td class="px-4 py-2 text-md text-gray-600 text-right">{{item.display_size}}</td>
+                        <td class="px-4 py-2 text-md text-gray-600"></td>
+                    </tr>
                     {% endfor %}
 
                 </tbody>
             </table>
 
-            {% if files %}
+            {% if page_data %}
             <div class="mt-4 flex gap-2">
-                {% if files.has_previous %}
-                <a href="?page={{ files.previous_page_number }}#file-table"
+                {% if page_data.has_previous %}
+                <a href="?page={{ page_data.previous_page_number }}#file-table"
                     class="px-2 py-1 mr-3 border border-gray-200 text-gray-600 text-sm">Page Précédente</a>
                 {% endif %}
 
-                <span class="mr-3 py-1 text-gray-600 text-sm ">Page {{ files.number }} sur
-                    {{files.paginator.num_pages }}</span>
+                <span class="mr-3 py-1 text-gray-600 text-sm ">Page {{ page_data.number }} sur
+                    {{page_data.paginator.num_pages}}</span>
 
-                {% if files.has_next %}
-                <a href="?page={{ files.next_page_number }}#file-table"
+                {% if page_data.has_next %}
+                <a href="?page={{ page_data.next_page_number }}#file-table"
                     class="px-2 py-1 border border-gray-200 text-gray-600 text-sm">Page Suivante</a>
                 {% endif %}
             </div>
@@ -99,7 +119,7 @@
                             <th class="px-4 py-2 text-left text-md font-semibold border-l-2 border-gray-200">
                                 <div>
                                     <a href="#" class="flex items-center space-x-2 justify-between">
-                                        <span>{{folder.name}}</span>
+                                        <span>{{folder.display_name}}</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                             stroke-width="1.5" stroke="currentColor" class="size-6">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -116,11 +136,28 @@
                             <td class="px-4 py-2 text-md text-gray-600">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                            d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                                     </svg>
-                                    <span>{{ folder.name }}</span>
+                                    <span>{{ folder.display_name }}</span>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="shadow shadow-sm group">
+                            <td class="px-4 py-2 text-md text-gray-600">
+                                <div class="flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                    </svg>
+
+
+                                    <span>{{folder.full_path}}</span>
                                 </div>
                             </td>
                         </tr>
@@ -130,7 +167,7 @@
                             <td class="px-4 py-2 text-md text-gray-600">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                        stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
                                     </svg>
@@ -200,30 +237,35 @@
 
             <div id="my-folders">
 
-                {% if folders %}
-                <table class="min-w-full border-b border-gray-300 mt-4">
+                {% if recent_folders %}
+                <table class="border-b border-gray-300 mt-4">
                     <thead class="bg-[#ffd500]">
                         <tr>
                             <th class="px-4 py-2 text-left text-md font-semibold border-l-2 border-gray-200">
-                                Mes dossiers
+                                Dossiers récents
                             </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white">
 
-                        {% for my_folder in folders %}
+                        {% for my_folder in recent_folders %}
                         <tr class="shadow shadow-sm group hover:bg-gray-50">
                             <td class="px-2 py-1 text-sm text-gray-600">
-                                <a href="{% url 'my-box' %}?dossier={{my_folder.id}}"
-                                    class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="#027991" class="w-4 h-4">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                                    </svg>
+                                <div>
+                                    <a href="{% url 'my-box' %}?dossier={{my_folder.id}}"
+                                        class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center">
 
-                                    <span>{{my_folder.name}}</span>
-                                </a>
+                                        <!-- Icon -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="#027991" class="w-4 h-4 shrink-0">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                                        </svg>
+
+                                        <!-- Folder name -->
+                                        <span>{{ my_folder.display_name }}</span>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -236,7 +278,8 @@
 
                     <dialog id="addNewFolderDialog"
                         class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-                        <form method="post" action="{% url 'new-folder' %}{% if folder %}?dossier={{folder.id}}{% endif %}">
+                        <form method="post"
+                            action="{% url 'new-folder' %}{% if folder %}?dossier={{folder.id}}{% endif %}">
                             {% csrf_token %}
 
                             <h2 class="text-xl font-bold mb-4">Ajouter un Nouveau Dossier</h2>
@@ -247,7 +290,7 @@
                                     </label>
                                     <input
                                         class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-                                        id="name" name="name" type="text" maxlength="30"
+                                        id="name" name="name" type="text" maxlength="80"
                                         placeholder="Nom du Nouveau Dossier" required>
                                 </div>
                             </div>

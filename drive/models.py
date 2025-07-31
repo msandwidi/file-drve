@@ -1,21 +1,70 @@
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.utils import timezone
 from django.db import models
+import unicodedata
 import uuid
 import os
+import re
+
+INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+' 
+RESERVED_NAMES = {'.', '..', 'con', 'nul', 'prn'}
+
+def sanitize_filename(filename):
+    """
+    Create a safe file name
+    """
+    
+    # Remove path traversal
+    filename = os.path.basename(filename)
+
+    # Normalize unicode (e.g., é → e)
+    filename = unicodedata.normalize("NFKD", filename).encode("ascii", "ignore").decode()
+
+    # Split name and extension
+    name, ext = os.path.splitext(filename)
+
+    # Replace invalid characters
+    name = re.sub(r'[^A-Za-z0-9_\-\. ]+', '', name)
+
+    # Collapse whitespace and strip
+    name = re.sub(r'\s+', '_', name).strip('_')
+
+    # Default if empty
+    if not name:
+        name = "file"
+
+    # Reassemble
+    sanitized = f"{name}{ext.lower()}"
+    return sanitized[:255]  # limit to safe length
 
 def user_directory_path(instance, filename):
-    base, ext = os.path.splitext(filename)
-    safe_name = slugify(base)  
+    """
+    Get user directory path for a file
+    """
     
+    safe_filename = sanitize_filename(filename)
+    base, ext = os.path.splitext(safe_filename)
+
     timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-    final_name = f"{timestamp}_{safe_name}{ext.lower()}"
+    final_name = f"{timestamp}_{base}{ext.lower()}"
 
     if instance.folder:
-        folder_path = instance.folder.full_path()
-        return f'user_{instance.user.id}/{folder_path}/{final_name}'
-    return f'user_{instance.user.id}/{final_name}'
+        folder_path = instance.folder.full_path()  # ensure it's safe
+        return f"user_{instance.user.id}/{folder_path}/{final_name}"
+    return f"user_{instance.user.id}/{final_name}"
+
+def sizeof_fmt(num, suffix="B"):
+    """
+    Get size of a file
+    """
+    
+    for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+        if abs(num) < 1024.0:
+            return f"{num:.1f} {unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f} Y{suffix}"
 
 class FileRecord(models.Model):
     file = models.FileField(upload_to=user_directory_path)
@@ -53,9 +102,35 @@ class FileRecord(models.Model):
     )
     
     @property
+    def size(self):
+        if self.file and hasattr(self.file, 'path'):
+            try:
+                size_bytes = os.path.getsize(self.file.path)
+                return size_bytes
+            except OSError:
+                return 0
+        return 0
+    
+    @property
     def file_extension(self):
         name = self.file.name
         return os.path.splitext(name)[1].lower().lstrip('.')
+    
+    @property
+    def display_name(self):
+        return self.original_filename
+    
+    @property
+    def type(self):
+        return 'file'
+    
+    @property
+    def display_type(self):
+        return self.file_extension
+    
+    @property
+    def display_size(self):
+        return sizeof_fmt(self.file_size)
 
     class Meta:
         ordering = ['-uploaded_at']
@@ -107,15 +182,87 @@ class FolderRecord(models.Model):
         
     def __str__(self):
         return self.name
+       
+    @property
+    def display_size(self):
+        """
+        Human readable format
+        """
+        return '-'
+    
+    @property
+    def display_name(self):
+        return self.name
+    
+    @property
+    def type(self):
+        return 'folder'
+    
+    @property
+    def display_type(self):
+        return 'dossier'
+    
+    @property
+    def display_size(self):
+        return '-'
+    
+    def clean(self):
+        
+        full_path = self.full_path()
+        if len(full_path) > 4096:
+            raise ValidationError(f"Full path exceeds maximum allowed length (4096). Current length: {len(full_path)}")
+        
+        name = self.name.strip()
+
+        # Check for empty name
+        if not name:
+            raise ValidationError("Folder name cannot be empty or just whitespace.")
+
+        # Check for reserved names
+        if name.lower() in RESERVED_NAMES:
+            raise ValidationError(f"'{name}' is a reserved folder name.")
+
+        # Check for invalid characters
+        if re.search(INVALID_FOLDER_CHARS, name):
+            raise ValidationError("Folder name contains invalid characters. Only letters, numbers, spaces, underscores and hyphens are allowed.")
+
+        # Check for leading/trailing slashes or dots
+        if name.startswith(('/', '\\', '.')) or name.endswith(('/', '\\')):
+            raise ValidationError("Folder name cannot start or end with '/', '\\', or '.'")
+
+    def save(self, *args, **kwargs):
+        self.full_clean() 
+        super().save(*args, **kwargs)
     
     def is_expired(self):
         from django.utils import timezone
         return self.expires_at and timezone.now() > self.expires_at
 
+    def full_path_data(self):
+        parts = [{
+            'id': self.id,
+            'name': self.name
+        }]
+        
+        parent = self.parent
+        
+        while parent:
+            
+            parts.append(
+            {
+                'id': parent.id,
+                'name': parent.name
+            })
+            
+            parent = parent.parent
+            
+        return reversed(parts)
+    
     def full_path(self):
         parts = [self.name]
         parent = self.parent
         while parent:
             parts.append(parent.name)
             parent = parent.parent
-        return '/'.join(reversed(parts))
+        return "/" + "/".join(reversed(parts))    
+   

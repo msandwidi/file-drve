@@ -24,7 +24,10 @@ def my_drive_view(request):
         page = 1
         
     folder_id = request.GET.get('dossier')
+    
     folder = None
+    files=list()
+    folders=list()
     
     if is_valid_int(folder_id):
         folder = FolderRecord.objects.filter(
@@ -59,14 +62,18 @@ def my_drive_view(request):
             user=request.user,
             parent=None
         )
+                        
+    items = list(folders) + list(files)
         
-    paginator = Paginator(files, page_size) 
+    paginator = Paginator(items, page_size) 
     page_obj = paginator.get_page(page)
     
     return render(request, 'drive/my-drive.html', {
         'files': page_obj,
         'folders': folders,
         'folder': folder,
+        'page_data': page_obj,
+        'recent_folders': folders.order_by('-created_at')[:10]
     })
 
 def file_details_view(request, file_id):
@@ -100,6 +107,7 @@ def create_folder_view(request):
         folder = FolderRecord.objects.filter(
             user=request.user,
             is_deleted=False,
+            id=folder_id
         ).first()
         
         if not folder:
@@ -122,7 +130,7 @@ def create_folder_view(request):
     )
     
     url = reverse('my-box')
-    return redirect(f"{url}?dossier-{new_folder.id}")
+    return redirect(f"{url}?dossier={folder.id}")
 
 def trash_bin_view(request):
     return render(request, 'drive/trash-bin.html')
