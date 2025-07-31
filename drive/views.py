@@ -4,7 +4,11 @@ from .models import FileRecord, FolderRecord
 from django.core.paginator import Paginator
 from django.contrib import messages
 from core.utils import is_valid_int
+from django.utils import timezone
 from django.urls import reverse
+import logging
+
+logger = logging.getLogger(__name__)
 
 def my_drive_view(request):
     """
@@ -23,32 +27,97 @@ def my_drive_view(request):
     else:
         page = 1
         
-    folder_id = request.GET.get('dossier')
+    folder_slug = request.GET.get('dossier')
     
     folder = None
     files=list()
     folders=list()
-    
-    if is_valid_int(folder_id):
-        folder = FolderRecord.objects.filter(
-            id=folder_id,
-            user=request.user,
-            is_deleted=False,
-        ).first()
-    
-    if folder_id == 'fichiers-recents':
+        
+    if folder_slug == 'fichiers-recents':
+        # recent files
+        logger.info(f'fetching {folder_slug}...')
+
         files = FileRecord.objects.filter(
             user=request.user,
             is_deleted=False,
         ).order_by('-last_accessed_at')
+
+        # always return empty result
+        folders = FolderRecord.objects.none()
+
+    elif folder_slug == 'favoris':
+        # favorite folders
+        logger.info(f'fetching {folder_slug}...')
+
+        files = FileRecord.objects.filter(
+            user=request.user,
+            is_deleted=False,
+            is_favorite=True,
+        )
+
+        # favorite folders
+        folders = FolderRecord.objects.filter(
+            is_deleted=False,
+            user=request.user,
+            is_favorite=True,
+        )
+
+    elif folder_slug == 'partages':
+        # shared folders
+        logger.info(f'fetching {folder_slug}...')
+
+        files = FileRecord.objects.filter(
+            user=request.user,
+            is_deleted=False,
+            is_shared=True,
+        )
+
+        # shared folders
+        folders = FolderRecord.objects.filter(
+            is_deleted=False,
+            user=request.user,
+            is_shared=True,
+        )
         
-    elif folder:
-        # folder files
+    elif folder_slug == 'partages-avec-moi':
+        # files shared with me
+        logger.info(f'fetching {folder_slug}...')
+
+        files = FileRecord.objects.filter(
+            user=request.user,
+            is_deleted=False,
+            is_shared=True,
+        ).exclude(user=request.user)
+
+        # folders shared with me
+        folders = FolderRecord.objects.filter(
+            is_deleted=False,
+            user=request.user,
+            is_shared=True,
+        ).exclude(user=request.user)
+    
+    elif folder_slug:
+        logger.info('Finding folder by slog...')
+
+        folder = FolderRecord.objects.filter(
+            slug=folder_slug,
+            user=request.user,
+            is_deleted=False,
+        ).first()
+
+        if not folder:
+            messages.warning(request, 'Dossier introuvable')
+            return redirect('my-box')
+        
+        logger.info(f'fetching folder {folder_slug} content...')
+
         files = folder.files.all()
         
-        folders = folder.subfolders.all()
-        
+        folders = folder.subfolders.all().filter(is_deleted=False)
+
     else:
+        logger.info(f'fetching root folders and files...')
+
         # root files
         files = FileRecord.objects.filter(
             user=request.user,
@@ -72,27 +141,176 @@ def my_drive_view(request):
         'files': page_obj,
         'folders': folders,
         'folder': folder,
+        'folder_slug': folder_slug,
         'page_data': page_obj,
         'recent_folders': folders.order_by('-created_at')[:10]
     })
 
-def file_details_view(request, file_id):
+def file_details_view(request, slug):
     """
     Get file details
     """
     
     file = FileRecord.objects.filter(
-        id=file_id,
+        slug=slug,
         is_deleted=False,
         user=request.user
     ).first()
     
     if not file:
+        messages.warning(request, 'Fichier introuvable')
         return redirect('my-box')
 
     return render(request, 'file/file-details.html', {
         'file': file
     })
+
+def delete_folder_view(request, slug):
+    """
+    Delete folder
+    """
+    
+    folder = FolderRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not folder:
+        messages.warning(request, 'Dossier introuvable')
+        return redirect('my-box')
+    
+    parent = folder.parent
+    
+    if not folder.files.all():
+        # hard delete empty folders
+        folder.delete()
+
+    else:
+        # soft delete non-empty folders
+        folder.is_deleted = True
+        folder.deleted_at = timezone.now()
+
+        folder.save()
+    
+    messages.success(request, 'Dossier supprimeé')
+
+    if parent:
+        url = reverse('my-box')
+        return redirect(f"{url}?dossier={parent.slug}")
+
+    return redirect('my-box')
+
+def delete_file_view(request, slug):
+    """
+    Delete file
+    """
+    
+    file = FileRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('my-box')
+    
+    parent = file.folder
+    
+    file.is_deleted = True
+    file.deleted_at = timezone.now()
+    file.save()
+    
+    messages.success(request, 'Fichier supprimé')
+
+    if parent:
+        url = reverse('my-box')
+        return redirect(f"{url}?dossier={parent.slug}")
+
+    return redirect('my-box')
+
+def share_folder_view(request, slug):
+    """
+    Share folder
+    """
+    
+    folder = FolderRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not folder:
+        messages.warning(request, 'Dossier introuvable')
+        return redirect('my-box')
+    
+    if request.method == 'POST':
+
+        if hasattr(folder, "is_shared"):
+            folder.is_shared = True
+            folder.shared_at = timezone.now()
+            folder.save(update_fields=["is_shared", 'shared_at'])
+    
+            messages.success(request, 'Dossier partagé')
+
+            return redirect('share-folder', slug=slug)
+
+    return render(request, 'drive/share-folder.html', {
+        'folder': folder
+    })
+
+@require_http_methods(['GET'])
+def toggle_favorite_view(request, slug):
+    """
+    Toggle favorite file or folder
+    """
+    slug_type = request.GET.get('type')
+    folder_slug = request.GET.get('dossier')
+
+    file = None
+
+    if slug_type == 'folder':
+
+        folder = FolderRecord.objects.filter(
+            slug=slug,
+            user=request.user,
+            is_deleted=False,
+        ).first()
+
+        if folder and hasattr(folder, "is_favorite"):
+            folder.is_favorite = not folder.is_favorite
+            folder.save(update_fields=["is_favorite"])
+
+            logger.info('toggled favorite folder')  
+
+            messages.success(request, 'Dossier marqué favoris')
+        
+    else:
+
+        file = FileRecord.objects.filter(
+            slug=slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+        
+        if file and hasattr(file, "is_favorite"):
+            file.is_favorite = not file.is_favorite
+            file.save(update_fields=["is_favorite"])
+    
+            logger.info('toggled favorite file')
+
+            messages.success(request, 'Fichier marqué favoris')
+
+    url = reverse('my-box')
+
+    if folder_slug:
+        return redirect(f"{url}?dossier={folder_slug}")
+    
+    elif file and file.folder:
+        return redirect(f"{url}?dossier={file.folder.slug}")
+    
+    return redirect('my-box')
 
 @require_http_methods(['POST'])
 def create_folder_view(request):
@@ -100,14 +318,14 @@ def create_folder_view(request):
     Create a new folder
     """
     
-    folder_id = request.GET.get('dossier')
+    slug = request.GET.get('dossier')
     folder = None
     
-    if is_valid_int(folder_id):
+    if slug:
         folder = FolderRecord.objects.filter(
             user=request.user,
             is_deleted=False,
-            id=folder_id
+            slug=slug
         ).first()
         
         if not folder:
@@ -130,7 +348,10 @@ def create_folder_view(request):
     )
     
     url = reverse('my-box')
-    return redirect(f"{url}?dossier={folder.id}")
 
+    if folder:
+        return redirect(f"{url}?dossier={folder.slug}")
+    return redirect(f"{url}?dossier={new_folder.slug}")
+    
 def trash_bin_view(request):
     return render(request, 'drive/trash-bin.html')

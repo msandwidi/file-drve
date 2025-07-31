@@ -71,13 +71,16 @@ class FileRecord(models.Model):
 
     original_filename = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     
-    is_public = models.BooleanField(default=False)
+    is_shared = models.BooleanField(default=False)
+    shared_at = models.DateTimeField(null=True, blank=True)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
 
     download_limit = models.IntegerField(null=True, blank=True)
@@ -86,6 +89,8 @@ class FileRecord(models.Model):
     last_accessed_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     
     expires_at = models.DateTimeField(null=True, blank=True)
+
+    is_favorite = models.BooleanField(default=False)
     
     folder = models.ForeignKey(
         'drive.FolderRecord', 
@@ -143,16 +148,32 @@ class FileRecord(models.Model):
         return self.expires_at and timezone.now() > self.expires_at
 
     def save(self, *args, **kwargs):
-        # Save original filename
         if not self.original_filename:
             self.original_filename = os.path.basename(self.file.name)
+
+        if not self.slug:
+            base_slug = slugify(self.original_filename)
+            timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+            max_slug_length = 255
+            slug_candidate = f"{base_slug}-{timestamp}"
+
+            # Truncate if it's too long
+            if len(slug_candidate) > max_slug_length:
+                base_slug = base_slug[:max_slug_length - len(timestamp) - 1]  # for hyphen
+                slug_candidate = f"{base_slug}-{timestamp}"
+
+            self.slug = slug_candidate
+
         super().save(*args, **kwargs)
 
 class FolderRecord(models.Model):
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255, null=True, blank=True)
     
-    is_public = models.BooleanField(default=False)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+
+    is_shared = models.BooleanField(default=False)
+    shared_at = models.DateTimeField(null=True, blank=True)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -161,6 +182,8 @@ class FolderRecord(models.Model):
     
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
+
+    is_favorite = models.BooleanField(default=False)
     
     user = models.ForeignKey(
         get_user_model(), 
@@ -182,7 +205,7 @@ class FolderRecord(models.Model):
         
     def __str__(self):
         return self.name
-       
+    
     @property
     def display_size(self):
         """
@@ -207,33 +230,43 @@ class FolderRecord(models.Model):
         return '-'
     
     def clean(self):
-        
         full_path = self.full_path()
         if len(full_path) > 4096:
-            raise ValidationError(f"Full path exceeds maximum allowed length (4096). Current length: {len(full_path)}")
-        
+            raise ValidationError({'name': f"Full path exceeds 4096 characters. Length: {len(full_path)}"})
+
         name = self.name.strip()
+        self.name = name  # Save cleaned name
 
-        # Check for empty name
         if not name:
-            raise ValidationError("Folder name cannot be empty or just whitespace.")
+            raise ValidationError({'name': "Folder name cannot be empty or just whitespace."})
 
-        # Check for reserved names
         if name.lower() in RESERVED_NAMES:
-            raise ValidationError(f"'{name}' is a reserved folder name.")
+            raise ValidationError({'name': f"'{name}' is a reserved folder name."})
 
-        # Check for invalid characters
         if re.search(INVALID_FOLDER_CHARS, name):
-            raise ValidationError("Folder name contains invalid characters. Only letters, numbers, spaces, underscores and hyphens are allowed.")
+            raise ValidationError({'name': "Folder name contains invalid characters. Only letters, numbers, spaces, underscores and hyphens are allowed."})
 
-        # Check for leading/trailing slashes or dots
         if name.startswith(('/', '\\', '.')) or name.endswith(('/', '\\')):
-            raise ValidationError("Folder name cannot start or end with '/', '\\', or '.'")
+            raise ValidationError({'name': "Folder name cannot start or end with '/', '\\', or '.'"})
 
     def save(self, *args, **kwargs):
-        self.full_clean() 
+        self.full_clean()
+
+        if not self.slug:
+            base_slug = slugify(self.name)
+            timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+            max_slug_length = 255
+            slug_candidate = f"{base_slug}-{timestamp}"
+
+            # Truncate if it's too long
+            if len(slug_candidate) > max_slug_length:
+                base_slug = base_slug[:max_slug_length - len(timestamp) - 1]  # for hyphen
+                slug_candidate = f"{base_slug}-{timestamp}"
+
+            self.slug = slug_candidate
+
         super().save(*args, **kwargs)
-    
+
     def is_expired(self):
         from django.utils import timezone
         return self.expires_at and timezone.now() > self.expires_at
@@ -241,7 +274,9 @@ class FolderRecord(models.Model):
     def full_path_data(self):
         parts = [{
             'id': self.id,
-            'name': self.name
+            'slug': self.slug,
+            'name': self.name,
+            'is_favorite': self.is_favorite,
         }]
         
         parent = self.parent
@@ -251,7 +286,9 @@ class FolderRecord(models.Model):
             parts.append(
             {
                 'id': parent.id,
-                'name': parent.name
+                'slug': parent.slug,
+                'name': parent.name,
+                'is_favorite': parent.is_favorite,
             })
             
             parent = parent.parent
@@ -265,4 +302,3 @@ class FolderRecord(models.Model):
             parts.append(parent.name)
             parent = parent.parent
         return "/" + "/".join(reversed(parts))    
-   
