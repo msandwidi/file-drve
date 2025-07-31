@@ -10,5 +10,6 @@ urlpatterns = [
     path('fichier/<slug:slug>/partager', views.share_folder_view, name='share-file'),
     path('fichier/<slug:slug>/details', views.file_details_view, name='file-details'),
     path('fichier/<slug:slug>/supprimer', views.delete_file_view, name='delete-file'),
+    path('fichier/importer', views.upload_files_view, name='upload-files'),
     path('favoris/<slug:slug>', views.toggle_favorite_view, name='toggle-favorite'),
 ]

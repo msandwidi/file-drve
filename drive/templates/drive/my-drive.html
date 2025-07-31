@@ -8,9 +8,31 @@
 <div>
 
     <div class="">
-        <button class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-1.5 font-semibold">
+        <button 
+            id="uploadFilesDialogBtn"
+            class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-1.5 font-semibold">
             Importer
         </button>
+
+        <dialog id="uploadFilesDialog"
+            class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
+            <form method="post" enctype="multipart/form-data" 
+                action="{% url 'upload-files' %}?dossier={{folder.slug}}">
+                {% csrf_token %}
+
+                <h2 class="text-xl font-bold mb-4">Importer des fichiers</h2>
+
+                <input type="file" name="file" 
+                    required
+                    multiple 
+                    max="20"
+                    class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
+                >
+                <button type="submit" class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-1.5 font-semibold">
+                    Importer
+                </button>            
+            </form>
+        </dialog>
     </div>
 
     <div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">

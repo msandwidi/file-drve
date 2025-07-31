@@ -3,13 +3,35 @@
 {% block title %}Sahel Box | Partage de dossier - {{folder.name}}{% endblock %}
 
 {% block content %}
-<h1 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 text-[#027991]">Partager un dossier</h1>
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-[#027991] mb-4">Partager un dossier</h1>
+
+<div class="flex items-center space-x-2 mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6 text-gray-500">
+        <path
+            d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
+    </svg>
+    <h1 class="text-md md:text-lg lg:text-xl font-semibold text-gray-500">{{folder.full_path}}</h1>
+</div>
 
 
 <div class="grid md:grid-cols-[5fr_3fr] sm:grid-cols-1 gap-2 mt-4">
-
     <div class="space-y-4">
-        <Button type="button" class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4  w-full">
+        <div>
+
+            {% if not shared_with %}
+            <div class="flex items-start p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg space-x-3"
+                role="alert">
+                <!-- Message -->
+                <div class="text-sm">
+                    Ce dossier n’a encore été partagé avec personne.
+                </div>
+            </div>
+
+            {% endif %}
+        </div>
+
+        <Button type="button"
+            class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4  w-full hover:bg-gray-50">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -20,7 +42,8 @@
         </Button>
 
         <div class="flex space-x-4">
-            <Button type="button" class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full">
+            <Button type="button"
+                class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full hover:bg-gray-50">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -29,7 +52,8 @@
 
                 <h4 class="text-lg font-semibold">Copier le lien</h4>
             </Button>
-            <Button type="button" class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full">
+            <Button type="button"
+                class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full hover:bg-gray-50">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -46,24 +70,21 @@
             <thead class="bg-gray-200">
                 <tr>
                     <th class="px-4 py-2 text-left text-md text-gray-700 font-bold border-l-2 border-gray-200">
-                        {{folder.full_path}}</th>
-                    <th class="w-[27%] md:w-[25%]  px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
-                        Type
+                        <a href="{% url 'my-box' %}?dossier={{folder.slug}}" class="hover:text-[#027991]">
+                            {{folder.full_path}}
+                        </a>
                     </th>
                 </tr>
             </thead>
             <tbody class="bg-white">
 
-                {% for file in files %}
+                {% for item in items %}
 
                 <tr class="shadow shadow-sm group">
                     <td class="px-4 py-2 text-md text-gray-600">
                         <a href="#" class="text-[#027991] font-semibold text-md mr-2">
-                            {{ file.name }}
+                            {{ item.name }}
                         </a>
-                    </td>
-                    <td class="px-4 py-4 text-md text-gray-700 text-right">
-                        {{file.type}}
                     </td>
                 </tr>
 
@@ -72,19 +93,17 @@
             </tbody>
         </table>
 
-        {% if files %}
+        {% if items %}
         <div class="mt-4 flex gap-2">
-            {% if files.has_previous %}
-            <a href="?page={{ files.previous_page_number }}#file-table"
-                class="px-2 py-1 mr-3 border border-gray-200 text-gray-600 text-sm">Page Précédente</a>
+            {% if items.has_previous %}
+            <a href="#" class="px-2 py-1 mr-3 border border-gray-200 text-gray-600 text-sm">Page Précédente</a>
             {% endif %}
 
-            <span class="mr-3 py-1 text-gray-600 text-sm ">Page {{ files.number }} sur
-                {{files.paginator.num_pages }}</span>
+            <span class="mr-3 py-1 text-gray-600 text-sm ">Page {{ items.number }} sur
+                {{items.paginator.num_pages }}</span>
 
-            {% if files.has_next %}
-            <a href="?page={{ files.next_page_number }}#file-table"
-                class="px-2 py-1 border border-gray-200 text-gray-600 text-sm">Page Suivante</a>
+            {% if items.has_next %}
+            <a href="#" class="px-2 py-1 border border-gray-200 text-gray-600 text-sm">Page Suivante</a>
             {% endif %}
         </div>
         {% endif %}

@@ -135,7 +135,7 @@ class FileRecord(models.Model):
     
     @property
     def display_size(self):
-        return sizeof_fmt(self.file_size)
+        return sizeof_fmt(self.size)
 
     class Meta:
         ordering = ['-uploaded_at']

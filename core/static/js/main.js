@@ -37,6 +37,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeAddNewContactForm = document.getElementById('closeAddNewContactForm');
   const addNewContactForm = document.getElementById('addNewContactForm');
 
+  const uploadFilesDialogBtn = document.getElementById('uploadFilesDialogBtn');
+  const closeUploadFilesDialogBtn = document.getElementById('closeUploadFilesDialogBtn');
+  const uploadFilesDialogForm = document.getElementById('uploadFilesDialog');
+
+  uploadFilesDialogBtn?.addEventListener('click', () => {
+    uploadFilesDialogForm.showModal();
+  });
+
+  closeUploadFilesDialogBtn?.addEventListener('click', () => {
+    uploadFilesDialogForm.close();
+  });
+
   addNewContactBtn?.addEventListener('click', () => {
     addNewContactForm.showModal();
   });
