@@ -231,20 +231,17 @@ class FolderRecord(models.Model):
         return self.name
     
     @property
-    def size(self):
-        return self.get_size()
-    
-    @property
     def display_size(self):
         """
         Human readable format
         """
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if self.size < 1024:
-                return f"{self.size:.2f} {unit}"
-            size_in_bytes /= 1024
-        return f"{self.size:.2f} PB"
+        total_size = self.get_size()
 
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if total_size < 1024:
+                return f"{total_size:.2f} {unit}"
+            total_size /= 1024
+        return f"{total_size:.2f} PB"
 
     @property
     def display_name(self):
@@ -258,10 +255,6 @@ class FolderRecord(models.Model):
     def display_type(self):
         return 'dossier'
     
-    @property
-    def display_size(self):
-        return '-'
-    
     def is_over_30mb(self):
         return self.get_size() >= FOLDER_SIZE_30MB
         
@@ -269,12 +262,18 @@ class FolderRecord(models.Model):
         """
         Get folder size
         """
-        total_size = self.files.filter(is_deleted=False).aggregate(size=Sum('file__size'))['size'] or 0
+        total = 0
 
+        # Sum sizes of files directly in this folder
+        for f in self.files.filter(is_deleted=False):
+            if f.file:
+                total += f.file.size
+
+        # Recurse into subfolders
         for subfolder in self.subfolders.filter(is_deleted=False):
-            total_size += subfolder.get_size()
+            total += subfolder.get_size()
 
-        return total_size
+        return total
     
     def get_depth(self):
         """

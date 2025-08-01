@@ -34,10 +34,10 @@ FORBIDDEN_EXTENSIONS = {
 
 def add_folder_to_zip(zip_file, folder, base_path):
     # Add files in this folder
-    for file in folder.files.filter(is_deleted=False):
-        if file.file:
-            file_path = file.file.path
-            arcname = os.path.join(base_path, file.original_filename)
+    for file_record in folder.files.filter(is_deleted=False):
+        if file_record.file:
+            file_path = file_record.file.path
+            arcname = os.path.join(base_path, file_record.original_filename)
             zip_file.write(file_path, arcname=arcname)
 
     # Recurse into subfolders
@@ -342,9 +342,8 @@ def download_folder_view(request, slug):
         messages.warning(request, 'Dossier introuvable')
         return redirect('my-box')
     
-    
     if folder.is_over_30mb():
-        # check folder size before dowload 
+        # check folder size before download 
         # if it is too large, create background 
         # and redirect user to waiting page
         

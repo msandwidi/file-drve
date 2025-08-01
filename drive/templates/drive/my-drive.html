@@ -83,8 +83,14 @@
                             {% include 'partials/record-icon.html' with item=item folder=folder folder_slug=folder_slug %}
                         </td>
                         <td class="px-4 py-2 text-sm text-gray-600">{{item.display_type}}</td>
-                        <td class="px-4 py-2 text-sm text-right text-gray-600">{{item.display_size}}</td>
-                        <td class="px-4 py-2 text-sm flex items-center space-x-4">
+                        <td class="px-4 py-2 text-sm text-right text-gray-600">
+                            {% if item.type == 'folder' %}
+                            -
+                            {% else %}
+                            {{item.display_size}}
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 text-sm flex items-center space-x-3">
 
                             {% if item.type == 'folder' %}
                             {% url 'delete-folder' item.slug as delete_url %}
