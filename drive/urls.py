@@ -10,6 +10,7 @@ urlpatterns = [
     path('dossier/<slug:slug>/download', views.download_folder_view, name='download-folder'),
     path('fichier/<slug:slug>/partager', views.share_file_view, name='share-file'),
     path('fichier/<slug:slug>/details', views.file_details_view, name='file-details'),
+    path('fichier/<slug:slug>/view', views.view_file_content_view, name='view-file'),
     path('fichier/<slug:slug>/supprimer', views.delete_file_view, name='delete-file'),
     path('fichier/<slug:slug>/download', views.download_file_view, name='download-file'),
     path('fichier/importer', views.upload_files_view, name='upload-files'),

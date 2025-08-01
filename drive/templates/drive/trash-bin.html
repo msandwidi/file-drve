@@ -9,15 +9,19 @@
     <table class="min-w-full border-b border-gray-300" id="file-table">
         <thead class="bg-gray-200">
             <tr>
-                <th class="px-4 py-2 text-left text-md text-gray-700 font-bold border-l-2 border-gray-200">
-                    Nom</th>
-                <th class="w-[27%] md:w-[25%]  px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
+                    corbeille/
+                </th>
+                <th class="w-[20%] md:w-[12%] px-4 py-2 text-right text-md text-gray-600 font-semibold">
                     Type
                 </th>
-                <th class="px-4 py-2 text-left text-md text-gray-700 font-bold text-right">
+                <th class="w-[20%] md:w-[12%] px-4 py-2 text-right text-md text-gray-600 font-semibold">
                     Taille
                 </th>
-                <th class="w-[25%] px-4 py-2 text-left text-md text-gray-700 font-bold">
+                <th class="w-[20%] md:w-[12%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
+                    Date
+                </th>
+                <th class="w-[25%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                     Actions
                 </th>
             </tr>
@@ -27,18 +31,24 @@
             {% for file in files %}
 
             <tr class="shadow shadow-sm group">
-                <td class="px-4 py-2 text-md text-gray-600">
-                    <a href="#" class="text-[#027991] font-semibold text-md mr-2">
-                        {{ file.name }}
-                    </a>
+                <td class="px-4 py-2 text-sm text-gray-600">
+                    <div class="text-sm flex space-x-2 items-center">
+
+                        {% include 'partials/record-icon.html' with display_type_group=file.display_type_group %}
+
+                        <span class="text-sm text-gray-600">{{file.display_name}}</span>
+                    </div>
                 </td>
-                <td class="px-4 py-4 text-md text-gray-700 text-right">
-                    {{file.type}}
+                <td class="px-4 py-2 text-sm text-gray-600 text-right">
+                    {{file.display_type}}
                 </td>
-                <td class="px-4 py-4 text-md text-gray-700 text-right">
-                    {{file.size}}
+                <td class="px-4 py-2 text-sm text-gray-600 text-right">
+                    {{file.display_size}}
                 </td>
-                <td class="px-4 py-4 text-md text-gray-700">
+                <td class="px-4 py-2 text-sm text-gray-600 text-right">
+                    {{file.deleted_at}}
+                </td>
+                <td class="px-4 py-2 text-sm text-gray-600">
                     ...
                 </td>
             </tr>
