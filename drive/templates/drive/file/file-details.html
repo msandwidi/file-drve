@@ -10,6 +10,13 @@
     <h1 class="text-md md:text-lg lg:text-xl font-semibold text-gray-500">{{file.display_name}}</h1>
 </div>
 
+<div class="flex space-x-3">
+    <button class="text-sm border border-gray-500 text-gray-500 px-3 py-.5 hover:bg-gray-50">Renommer</button>
+    <a href="{% url 'share-file' file.slug %}" class="text-sm border border-gray-500 text-gray-500 px-3 py-.5 hover:bg-gray-50">Partager</a>
+    <a href="{% url 'view-file' file.slug %}" target="_blank"
+        class="text-sm border border-gray-500 text-gray-500 px-3 py-.5 hover:bg-gray-50">Telecharger</a>
+</div>
+
 <div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
     <div>
         {% include 'partials/view-file.html' with file=file %}
