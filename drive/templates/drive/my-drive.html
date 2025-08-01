@@ -81,7 +81,8 @@
                     <tr class="shadow shadow-sm group hover:bg-gray-50 hover:text-[#027991]">
                         <td class="px-4 py-2 text-md">
                             <div>
-                            {% if item.type == 'folder' %}
+                                {% if item.type == 'folder' %}
+                                
                                 <a href="{% url 'my-box' %}?dossier={{item.slug}}"
                                     class="text-sm flex space-x-2 items-center">
 
@@ -93,6 +94,7 @@
 
                                     <span class="text-sm text-gray-600">{{item.display_name}}</span>
                                 </a>
+
                                 {% else %}
 
                                 <a href="{% url 'file-details' item.slug %}"
