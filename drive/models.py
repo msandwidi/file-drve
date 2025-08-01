@@ -74,7 +74,7 @@ class FileRecord(models.Model):
 
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -134,11 +134,32 @@ class FileRecord(models.Model):
         return self.file_extension
     
     @property
+    def display_type_group(self):
+        ext = self.display_type.lower()
+
+        categories = {
+            'pdf': ['pdf'],
+            'image': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'tiff'],
+            'document': ['pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'md'],
+            'spreadsheet': ['xls', 'xlsx', 'csv', 'ods'],
+            'presentation': ['ppt', 'pptx', 'odp'],
+            'archive': ['zip', 'rar', '7z', 'tar', 'gz'],
+            'audio': ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'],
+            'video': ['mp4', 'webm', 'mov', 'avi', 'mkv', 'wmv', 'flv'],
+        }
+
+        for category, extensions in categories.items():
+            if ext in extensions:
+                return category
+
+        return 'other'
+    
+    @property
     def display_size(self):
         return sizeof_fmt(self.size)
 
     class Meta:
-        ordering = ['-uploaded_at']
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.original_filename} by {self.user.username}"

@@ -9,14 +9,31 @@ from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_FILE_SIZE = 10 * 1024 * 1024
-MAX_TOTAL_UPLOAD_SIZE = 20 * 1024 * 1024 
-MAX_FILES_COUNT = 20
-MAX_FILES_COUNT_PER_DAY = 80
-MAX_FILES_COUNT_PER_HOUR = 50
+ALLOWED_FILE_SIZE = 10 * 1024 * 1024 # 10MB
+
+MAX_TOTAL_UPLOAD_SIZE = 20 * 1024 * 1024 # 20MB
+
+MAX_FILES_COUNT_PER_REQUEST = 20
+
+MAX_FILES_COUNT_PER_DAY = 80 # 80 files per 24h
+
+MAX_FILES_COUNT_PER_HOUR = 50 # 50 files per 1h
+
+FORBIDDEN_EXTENSIONS = {
+    '.exe', '.bat', '.cmd', '.sh', '.php', '.py', '.js', '.jar',
+    '.pl', '.cgi', '.vb', '.asp', '.aspx', '.html', '.htm', '.svg',
+    '.dll', '.iso', '.ps1', '.apk', '.chm'
+}
+
+def is_extension_safe(file):
+    name, ext = os.path.splitext(file.name)
+    if not ext:
+        return False
+    return ext.lower() not in FORBIDDEN_EXTENSIONS
 
 def my_drive_view(request):
     """
@@ -169,7 +186,7 @@ def file_details_view(request, slug):
         messages.warning(request, 'Fichier introuvable')
         return redirect('my-box')
 
-    return render(request, 'file/file-details.html', {
+    return render(request, 'drive/file/file-details.html', {
         'file': file
     })
 
@@ -276,6 +293,38 @@ def share_folder_view(request, slug):
         'folder': folder,
         'items': page_obj
     })
+
+def share_file_view(request, slug):
+    """
+    Share file
+    """
+    
+    file = FileRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('my-box')
+    
+    if request.method == 'POST':
+
+        if hasattr(file, "is_shared"):
+
+            file.is_shared = True
+            file.shared_at = timezone.now()
+            file.save(update_fields=["is_shared", 'shared_at'])
+    
+            messages.success(request, 'Fichier partagé')
+
+            return redirect('share-file', slug=slug)
+        
+    return render(request, 'drive/share-file.html', {
+        'file': file,
+    })
+
 
 @require_http_methods(['GET'])
 def toggle_favorite_view(request, slug):
@@ -412,10 +461,12 @@ def upload_files_view(request):
     ).count()
 
     if last_hour_count + len(files) > MAX_FILES_COUNT_PER_HOUR:
+        # too many upload per hour
         messages.warning(request, f"Limite atteinte : {MAX_FILES_COUNT_PER_HOUR} fichiers maximum par heure")
         return redirect('my-box')
     
     if last_day_count + len(files) > MAX_FILES_COUNT_PER_DAY:
+        # too many upload per day
         messages.warning(request, F"Limite atteinte : {MAX_FILES_COUNT_PER_DAY} fichiers maximum par heure")
         return redirect('my-box')
     
@@ -425,31 +476,35 @@ def upload_files_view(request):
     # Total size in bytes
     total_size = sum(f.size for f in files)
     
-    # Optional limits
-    if num_files > MAX_FILES_COUNT:
-        return ValidationError("Too many files. Max is 5.")
+    if num_files > MAX_FILES_COUNT_PER_REQUEST:
+        # Too many files
+        messages.warning(request, f"Trop de fichiers. Le maximum est de {MAX_FILES_COUNT_PER_REQUEST}")
+        return redirect('my-box')
 
-    if total_size > 20 * 1024 * 1024:  # e.g., 20 MB
-        return ValidationError("Total file size exceeds 20MB.")
-
+    if total_size > MAX_TOTAL_UPLOAD_SIZE:
+        # request too large
+        messages.warning(request, "éléversement trop volumineux")
+        return redirect('my-box')
     
-    for uploaded_file in files:
+    for file in files:
+        # check file extensions
+        if not is_extension_safe(file):
+            messages.warning(request, "Fichiers incompatibles detectés")
+            return redirect('my-box')
         
-        # allowed file size
-        if uploaded_file.size > ALLOWED_FILE_SIZE:
-            raise ValidationError("File too large")
+        if file.size > ALLOWED_FILE_SIZE:
+            messages.warning(request, "Fichiers trop loarge detectés")
+            return redirect('my-box')
 
-        # allowed extensions
-        if not uploaded_file.name.lower().endswith(('.pdf', '.jpg', '.zip')):
-            raise ValidationError("Unsupported file type")
-
+    for uploaded_file in files:
+    
         file_record = FileRecord.objects.create(
             user=user,
             file=uploaded_file,
             folder=folder
         )
-        
-    messages.success(request, 'Ficher sauvegardé')
+
+    messages.success(request, 'Fichers sauvegardés')
     
     url = reverse('my-box')
 
