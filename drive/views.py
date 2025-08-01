@@ -1,5 +1,6 @@
 from django.views.decorators.http import require_http_methods
 from django.core.exceptions import ValidationError
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from .models import FileRecord, FolderRecord
 from django.core.paginator import Paginator
@@ -9,7 +10,9 @@ from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
 import logging
+import zipfile
 import os
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,19 @@ FORBIDDEN_EXTENSIONS = {
     '.pl', '.cgi', '.vb', '.asp', '.aspx', '.html', '.htm', '.svg',
     '.dll', '.iso', '.ps1', '.apk', '.chm'
 }
+
+def add_folder_to_zip(zip_file, folder, base_path):
+    # Add files in this folder
+    for file in folder.files.filter(is_deleted=False):
+        if file.file:
+            file_path = file.file.path
+            arcname = os.path.join(base_path, file.original_filename)
+            zip_file.write(file_path, arcname=arcname)
+
+    # Recurse into subfolders
+    for subfolder in folder.subfolders.filter(is_deleted=False):
+        sub_path = os.path.join(base_path, subfolder.name)
+        add_folder_to_zip(zip_file, subfolder, sub_path)
 
 def is_extension_safe(file):
     name, ext = os.path.splitext(file.name)
@@ -190,6 +206,23 @@ def file_details_view(request, slug):
         'file': file
     })
 
+def download_file_view(request, slug):
+    """
+    Download file
+    """
+    
+    file_record = FileRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not file_record or not file_record.file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('my-box')
+
+    return FileResponse(file_record.file.open('rb'), as_attachment=True, filename=file_record.original_filename)
+
 def delete_folder_view(request, slug):
     """
     Delete folder
@@ -294,6 +327,41 @@ def share_folder_view(request, slug):
         'items': page_obj
     })
 
+def download_folder_view(request, slug):
+    """
+    Download folder
+    """
+    
+    folder = FolderRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not folder:
+        messages.warning(request, 'Dossier introuvable')
+        return redirect('my-box')
+    
+    
+    if folder.is_over_30mb():
+        # check folder size before dowload 
+        # if it is too large, create background 
+        # and redirect user to waiting page
+        
+        messages.warning(request, 'Dossier introuvable')
+        return redirect('my-box')
+        
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        add_folder_to_zip(zip_file, folder, base_path=folder.name)
+
+    zip_buffer.seek(0)
+
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{folder.name}.zip"'
+    return response
+
 def share_file_view(request, slug):
     """
     Share file
@@ -324,7 +392,6 @@ def share_file_view(request, slug):
     return render(request, 'drive/share-file.html', {
         'file': file,
     })
-
 
 @require_http_methods(['GET'])
 def toggle_favorite_view(request, slug):
@@ -397,6 +464,8 @@ def create_folder_view(request):
         if not folder:
             messages.warning(request, 'Dossier introuvable')
             return redirect('my-box')
+        
+        # check for folder deph
         
     name = request.POST.get('name')
     

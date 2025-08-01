@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.utils import timezone
+from django.db.models import Sum
 from django.db import models
 import unicodedata
 import uuid
@@ -10,6 +11,8 @@ import re
 
 INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+' 
 RESERVED_NAMES = {'.', '..', 'con', 'nul', 'prn'}
+MAX_FOLDER_DEPTH = 10
+FOLDER_SIZE_30MB = 30 * 1024 * 1024
 
 def sanitize_filename(filename):
     """
@@ -228,12 +231,21 @@ class FolderRecord(models.Model):
         return self.name
     
     @property
+    def size(self):
+        return self.get_size()
+    
+    @property
     def display_size(self):
         """
         Human readable format
         """
-        return '-'
-    
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if self.size < 1024:
+                return f"{self.size:.2f} {unit}"
+            size_in_bytes /= 1024
+        return f"{self.size:.2f} PB"
+
+
     @property
     def display_name(self):
         return self.name
@@ -250,7 +262,37 @@ class FolderRecord(models.Model):
     def display_size(self):
         return '-'
     
+    def is_over_30mb(self):
+        return self.get_size() >= FOLDER_SIZE_30MB
+        
+    def get_size(self):
+        """
+        Get folder size
+        """
+        total_size = self.files.filter(is_deleted=False).aggregate(size=Sum('file__size'))['size'] or 0
+
+        for subfolder in self.subfolders.filter(is_deleted=False):
+            total_size += subfolder.get_size()
+
+        return total_size
+    
+    def get_depth(self):
+        """
+        Returns how deeply nested this folder is under the user's root.
+        Root folder (parent=None) → depth 0
+        One level under root → depth 1, and so on.
+        """
+        depth = 0
+        current = self.parent
+        while current:
+            depth += 1
+            current = current.parent
+        return depth
+    
     def clean(self):
+        if self.get_depth() > MAX_FOLDER_DEPTH:
+            raise ValidationError(f"Folder nesting too deep. Maximum allowed depth is {MAX_FOLDER_DEPTH}.")
+
         full_path = self.full_path()
         if len(full_path) > 4096:
             raise ValidationError({'name': f"Full path exceeds 4096 characters. Length: {len(full_path)}"})
