@@ -13,6 +13,8 @@ INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+'
 RESERVED_NAMES = {'.', '..', 'con', 'nul', 'prn'}
 MAX_FOLDER_DEPTH = 10
 FOLDER_SIZE_30MB = 30 * 1024 * 1024
+MAX_FILENAME_LENGTH = 255
+MAX_SLUG_LENGTH = 255
 
 def sanitize_filename(filename):
     """
@@ -35,12 +37,14 @@ def sanitize_filename(filename):
     name = re.sub(r'\s+', '_', name).strip('_')
 
     # Default if empty
+    timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
     if not name:
-        name = "file"
+        name = f"fichier-{timestamp}"
 
-    # Reassemble
-    sanitized = f"{name}{ext.lower()}"
-    return sanitized[:255]  # limit to safe length
+    # Truncate name first, ensuring full extension fits
+    name = name[:MAX_FILENAME_LENGTH - len(ext)]
+    
+    return f"{name}{ext.lower()}"
 
 def user_directory_path(instance, filename):
     """
@@ -90,6 +94,8 @@ class FileRecord(models.Model):
     download_count = models.PositiveIntegerField(default=0)
 
     last_accessed_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    
+    last_updated_at = models.DateTimeField(auto_now_add=True)
     
     expires_at = models.DateTimeField(null=True, blank=True)
 
@@ -160,9 +166,37 @@ class FileRecord(models.Model):
     @property
     def display_size(self):
         return sizeof_fmt(self.size)
+    
+    @property
+    def name_without_ext(self):
+        return os.path.splitext(self.original_filename)[0]
 
     class Meta:
         ordering = ['-created_at']
+        
+    def rename_file(self, new_name_without_ext, desc):
+        if not self.file:
+            return
+
+        # Get original extension
+        base, ext = os.path.splitext(self.file.name)
+
+        # Generate new file path
+        new_name = f"{slugify(new_name_without_ext)}{ext.lower()}"
+        new_path = os.path.join(os.path.dirname(self.file.name), new_name)
+
+        # Save the file with the new name
+        self.file.storage.save(new_path, self.file)
+        self.file.delete(save=False)  # delete old file reference
+        self.file.name = new_path
+        
+        new_original_filename = f'{new_name_without_ext}{ext}'
+        
+        self.original_filename = new_original_filename
+        self.description = desc
+        self.last_accessed_at = timezone.now()
+        self.last_accessed_at = timezone.now()
+        self.save()
 
     def __str__(self):
         return f"{self.original_filename} by {self.user.username}"
@@ -176,14 +210,18 @@ class FileRecord(models.Model):
             self.original_filename = os.path.basename(self.file.name)
 
         if not self.slug:
-            base_slug = slugify(self.original_filename)
+            base, ext = os.path.splitext(self.original_filename)
+            base_slug = slugify(base)
             timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-            max_slug_length = 255
-            slug_candidate = f"{base_slug}-{timestamp}"
+            
+            # clean extension
+            ext = ext.lower().lstrip('.')
+            
+            slug_candidate = f"{base_slug}-{timestamp}-{ext}"
 
             # Truncate if it's too long
-            if len(slug_candidate) > max_slug_length:
-                base_slug = base_slug[:max_slug_length - len(timestamp) - 1]  # for hyphen
+            if len(slug_candidate) > MAX_SLUG_LENGTH:
+                base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - len(ext) - 2]
                 slug_candidate = f"{base_slug}-{timestamp}"
 
             self.slug = slug_candidate

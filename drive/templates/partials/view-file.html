@@ -1,5 +1,5 @@
 {% if file.display_type_group == "image" %}
-<img src="{% url 'view-file' file.slug %}" alt="{{ file.name }}">
+<img src="{% url 'view-file' file.slug %}" alt="{{ file.display_name }}">
 {% elif file.display_type_group == "pdf" %}
 <iframe src="{% url 'view-file' file.slug %}" width="100%" height="600px"></iframe>
 {% else %}

@@ -41,6 +41,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeUploadFilesDialogBtn = document.getElementById('closeUploadFilesDialogBtn');
   const uploadFilesDialogForm = document.getElementById('uploadFilesDialog');
 
+  const renameFileBtn = document.getElementById('renameFileBtn');
+  const closeRenameFileBtn = document.getElementById('closeRenameFileBtn');
+  const renameFileDialog = document.getElementById('renameFileDialog');
+
+  renameFileBtn?.addEventListener('click', () => {
+    renameFileDialog.showModal();
+  });
+
+  closeRenameFileBtn?.addEventListener('click', () => {
+    renameFileDialog.close();
+  });
+
   uploadFilesDialogBtn?.addEventListener('click', () => {
     uploadFilesDialogForm.showModal();
   });

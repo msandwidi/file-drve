@@ -232,6 +232,38 @@ def file_details_view(request, slug):
         'file': file
     })
 
+def rename_file_view(request, slug):
+    """
+    Rename file details
+    """
+    
+    file = FileRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not file:
+
+        parent_slug = request.GET.get('dossier')
+
+        if parent_slug:
+            url = reverse('my-box')
+            return redirect(f"{url}?dossier={parent_slug}")
+        
+        return redirect('my-box')
+    
+    name = request.POST.get('name')
+    
+    name, _ = os.path.splitext(name)
+    description = request.POST.get('description', '')
+    
+    file.rename_file(name, description)
+    
+    messages.success(request, 'Sauvegardé')
+
+    return redirect('file-details', slug)
+
 @require_http_methods(['GET'])
 @xframe_options_exempt
 def view_file_content_view(request, slug):
@@ -261,6 +293,10 @@ def view_file_content_view(request, slug):
         mime_type = 'application/octet-stream'
 
     response = FileResponse(file_record.file.open('rb'), content_type=mime_type)
+    
+    # update metadata
+    file_record.last_accessed_at = timezone.now()
+    file_record.save()
 
     # Set inline disposition
     response['Content-Disposition'] = f'inline; filename="{file_record.original_filename}"'
@@ -288,6 +324,10 @@ def download_file_view(request, slug):
             return redirect(f"{url}?dossier={parent_slug}")
         
         return redirect('my-box')
+    
+    # update meta
+    file_record.last_accessed_at = timezone.now()
+    file_record.save()
 
     return FileResponse(file_record.file.open('rb'), as_attachment=True, filename=file_record.original_filename)
 
@@ -405,7 +445,7 @@ def share_folder_view(request, slug):
     paginator = Paginator(items, 20) 
     page_obj = paginator.get_page(1)
 
-    return render(request, 'drive/share-folder.html', {
+    return render(request, 'drive/file/share-folder.html', {
         'folder': folder,
         'items': page_obj
     })
@@ -444,7 +484,7 @@ def download_folder_view(request, slug):
             return redirect(f"{url}?dossier={parent_slug}")
 
         return redirect('my-box')
-
+    
     zip_buffer = io.BytesIO()
     
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
@@ -491,7 +531,7 @@ def share_file_view(request, slug):
 
             return redirect('share-file', slug=slug)
         
-    return render(request, 'drive/share-file.html', {
+    return render(request, 'drive/file/share-file.html', {
         'file': file,
     })
 
@@ -593,6 +633,7 @@ def create_folder_view(request):
 
     if folder:
         return redirect(f"{url}?dossier={folder.slug}")
+    
     return redirect(f"{url}?dossier={new_folder.slug}")
     
 @require_http_methods(['POST'])
@@ -605,7 +646,6 @@ def upload_files_view(request):
     folder = None
     
     if parent_slug:
-        
         folder = FolderRecord.objects.filter(
             slug=parent_slug,
             user=request.user,
@@ -613,7 +653,6 @@ def upload_files_view(request):
         ).first()
         
         if not folder:
-            
             messages.warning(request, 'Dossier introuvalbe')
             return redirect('my-box')
     
@@ -644,13 +683,11 @@ def upload_files_view(request):
 
     if last_hour_count + len(files) > MAX_FILES_COUNT_PER_HOUR:
         # too many upload per hour
-
         messages.warning(request, f"Limite atteinte : {MAX_FILES_COUNT_PER_HOUR} fichiers maximum par heure")
         return redirect(return_url)
     
     if last_day_count + len(files) > MAX_FILES_COUNT_PER_DAY:
         # too many upload per day
-
         messages.warning(request, F"Limite atteinte : {MAX_FILES_COUNT_PER_DAY} fichiers maximum par heure")
         return redirect(return_url)
     
@@ -662,33 +699,27 @@ def upload_files_view(request):
     
     if num_files > MAX_FILES_COUNT_PER_REQUEST:
         # Too many files
-
         messages.warning(request, f"Trop de fichiers. Le maximum est de {MAX_FILES_COUNT_PER_REQUEST}")
         return redirect(return_url)
 
     if total_size > MAX_TOTAL_UPLOAD_SIZE:
         # request too large
-
         messages.warning(request, "Téléversement trop volumineux")
         return redirect(return_url)
-
     
     for file in files:
         # check file extensions
 
         if not is_extension_safe(file):
-
             messages.warning(request, "Fichiers incompatibles detectés")
             return redirect(return_url)
 
         if file.size > ALLOWED_FILE_SIZE:
-
             messages.warning(request, "Fichiers trop loarge detectés")
             return redirect(return_url)
 
     for uploaded_file in files:
-    
-        file_record = FileRecord.objects.create(
+        FileRecord.objects.create(
             user=user,
             file=uploaded_file,
             folder=folder
