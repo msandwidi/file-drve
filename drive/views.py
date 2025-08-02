@@ -234,7 +234,7 @@ def file_details_view(request, slug):
 
 def rename_file_view(request, slug):
     """
-    Rename file details
+    Rename file
     """
     
     file = FileRecord.objects.filter(
@@ -264,6 +264,37 @@ def rename_file_view(request, slug):
 
     return redirect('file-details', slug)
 
+def rename_folder_view(request, slug):
+    """
+    Rename folder
+    """
+    
+    folder = FolderRecord.objects.filter(
+        slug=slug,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not folder:
+
+        parent_slug = request.GET.get('dossier')
+
+        if parent_slug:
+            url = reverse('my-box')
+            return redirect(f"{url}?dossier={parent_slug}")
+        
+        return redirect('my-box')
+    
+    name = request.POST.get('name')
+    description = request.POST.get('description', '')
+    
+    folder.rename_folder(name, description)
+
+    messages.success(request, 'Sauvegardé')
+
+    url = reverse('my-box')
+    return redirect(f"{url}?dossier={folder.slug}")
+    
 @require_http_methods(['GET'])
 @xframe_options_exempt
 def view_file_content_view(request, slug):
@@ -445,7 +476,7 @@ def share_folder_view(request, slug):
     paginator = Paginator(items, 20) 
     page_obj = paginator.get_page(1)
 
-    return render(request, 'drive/file/share-folder.html', {
+    return render(request, 'drive/share-folder.html', {
         'folder': folder,
         'items': page_obj
     })

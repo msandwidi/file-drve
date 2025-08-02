@@ -77,7 +77,7 @@ class FileRecord(models.Model):
     file = models.FileField(upload_to=user_directory_path)
 
     original_filename = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, null=True)
 
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     
@@ -195,7 +195,7 @@ class FileRecord(models.Model):
         self.original_filename = new_original_filename
         self.description = desc
         self.last_accessed_at = timezone.now()
-        self.last_accessed_at = timezone.now()
+        self.last_updated_at = timezone.now()
         self.save()
 
     def __str__(self):
@@ -292,6 +292,21 @@ class FolderRecord(models.Model):
     @property
     def display_type(self):
         return 'dossier'
+
+    def rename_folder(self, new_name, desc):
+        base_slug = slugify(new_name)
+        timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+        slug_candidate = f"{base_slug}-{timestamp}"
+
+        if len(slug_candidate) > MAX_SLUG_LENGTH:
+            base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - 1]  
+            slug_candidate = f"{base_slug}-{timestamp}"
+
+        self.slug = slug_candidate
+        self.description = desc
+        self.name = new_name
+        
+        self.save()
     
     def is_over_30mb(self):
         return self.get_size() >= FOLDER_SIZE_30MB
@@ -355,12 +370,11 @@ class FolderRecord(models.Model):
         if not self.slug:
             base_slug = slugify(self.name)
             timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-            max_slug_length = 255
             slug_candidate = f"{base_slug}-{timestamp}"
 
             # Truncate if it's too long
-            if len(slug_candidate) > max_slug_length:
-                base_slug = base_slug[:max_slug_length - len(timestamp) - 1]  # for hyphen
+            if len(slug_candidate) > MAX_SLUG_LENGTH:
+                base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - 1]  # for hyphen
                 slug_candidate = f"{base_slug}-{timestamp}"
 
             self.slug = slug_candidate

@@ -11,14 +11,14 @@
     <h1 class="text-md md:text-lg lg:text-xl font-semibold text-gray-500">{{file.display_name}}</h1>
 </div>
 
-<div class="flex space-x-3">
+<!-- <div class="flex space-x-3 ">
     <button id="renameFileBtn"
         class="text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md">Renommer</button>
     <a href="{% url 'share-file' file.slug %}"
         class="text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md">Partager</a>
     <a href="{% url 'download-file' file.slug %}"
         class="text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md">Telecharger</a>
-</div>
+</div> -->
 
 <dialog id="renameFileDialog"
     class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
@@ -33,7 +33,7 @@
                 </label>
                 <input
                     class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-                    id="name" name="name" type="text" maxlength="80" placeholder="Nom du Nouveau Dossier" required value="{{file.name_without_ext}}">
+                    id="name" name="name" type="text" maxlength="80" placeholder="Nom du Fichier" required value="{{file.name_without_ext}}">
             </div>
 
             <div class="mb-2">
@@ -42,7 +42,7 @@
                 </label>
                 <textarea
                     class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-                    id="description" name="description" maxlength="80" placeholder="Description du Dossier">{{file.description}}</textarea>
+                    id="description" name="description" maxlength="80" placeholder="Description du Fichier">{{file.description|default:''}}</textarea>
             </div>
         </div>
 
@@ -99,9 +99,13 @@
                             </svg>
                             <span>
                                 {% if file.folder %}
-                                {{file.folder.full_path}}
+                                <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}"
+                                    class="hover:text-[#027991]">
+                                    home/{{file.folder.full_path}}
+                                </a>
                                 {% else %}
-                                home/
+                                <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}"
+                                    class="hover:text-[#027991]">home/</a>
                                 {% endif %}
                             </span>
                         </div>
@@ -139,15 +143,39 @@
                     </td>
                 </tr>
 
+                <tr class="shadow-sm group">
+                    <td class="px-2 py-2 text-sm text-gray-600">
+                        <div class="w-full space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                                <button id="renameFileBtn"
+                                    class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+                                    Renommer
+                                </button>
+
+                                <a href="{% url 'share-file' file.slug %}"
+                                    class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+                                    Partager
+                                </a>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                                <a href="{% url 'download-file' file.slug %}"
+                                    class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+                                    Telecharger
+                                </a>
+
+                                <a href="{% url 'delete-file' file.slug %}"
+                                    class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
+                                    Supprimer
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
             </tbody>
         </table>
 
-        <form action="{% url 'delete-file' file.slug %}?dossier={{file.folder.slug}}" method="post">
-            {% csrf_token %}
-            <button type="submit"
-                class="text-sm border border-red-500 text-red-500 px-4 py-1 bg-white hover:bg-red-50 mt-4">Supprimer
-                ce Ficher</button>
-        </form>
     </div>
 </div>
 

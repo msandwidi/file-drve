@@ -45,6 +45,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeRenameFileBtn = document.getElementById('closeRenameFileBtn');
   const renameFileDialog = document.getElementById('renameFileDialog');
 
+  const renameFolderBtn = document.getElementById('renameFolderBtn');
+  const closeRenameFolderBtn = document.getElementById('closeRenameFolderBtn');
+  const renameFolderDialog = document.getElementById('renameFolderDialog');
+
+  renameFolderBtn?.addEventListener('click', () => {
+    renameFolderDialog.showModal();
+  });
+
+  closeRenameFolderBtn?.addEventListener('click', () => {
+    renameFolderDialog.close();
+  });
+
+
   renameFileBtn?.addEventListener('click', () => {
     renameFileDialog.showModal();
   });

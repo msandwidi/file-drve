@@ -8,6 +8,7 @@ urlpatterns = [
     path('dossier/<slug:slug>/supprimer', views.delete_folder_view, name='delete-folder'),
     path('dossier/<slug:slug>/partager', views.share_folder_view, name='share-folder'),
     path('dossier/<slug:slug>/download', views.download_folder_view, name='download-folder'),
+    path('dossier/<slug:slug>/rename', views.rename_folder_view, name='rename-folder'),
     path('fichier/<slug:slug>/partager', views.share_file_view, name='share-file'),
     path('fichier/<slug:slug>/rename', views.rename_file_view, name='rename-file'),
     path('fichier/<slug:slug>/details', views.file_details_view, name='file-details'),
