@@ -172,7 +172,7 @@ def my_drive_view(request):
         
         logger.info(f'fetching folder {folder_slug} content...')
 
-        files = folder.files.all()
+        files = folder.files.all().filter(is_deleted=False)
         
         folders = folder.subfolders.all().filter(is_deleted=False)
 
@@ -219,6 +219,8 @@ def file_details_view(request, slug):
     ).first()
     
     if not file:
+
+        messages.warning(request, 'Fichier introuvable')
 
         parent_slug = request.GET.get('dossier')
 
@@ -613,8 +615,13 @@ def toggle_favorite_view(request, slug):
     if folder_slug:
         return redirect(f"{url}?dossier={folder_slug}")
     
+    elif not slug_type and not folder_slug:
+        return redirect('file-details', slug)
+    
     elif file and file.folder:
         return redirect(f"{url}?dossier={file.folder.slug}")
+    
+
     
     return redirect('my-box')
 

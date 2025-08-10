@@ -53,8 +53,7 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
-                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home</a>/ {% for path_data in folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}"
-                                class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %} /{%endif%}</a>{% endfor %}
+                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home</a>/ {% for path_data in folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}" class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %} /{%endif%}</a>{% endfor %}
                         </th>
                         <th class="w-[20%] md:w-[12%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Type
@@ -205,16 +204,7 @@
                     <thead class="bg-[#90caf9]">
                         <tr>
                             <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
-                                <div>
-                                    <a href="#" class="flex items-center space-x-2 justify-between">
-                                        <span>{{folder.display_name}}</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke-width="1.5" stroke="currentColor" class="size-6">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                        </svg>
-                                    </a>
-                                </div>
+                                <span>{{folder.display_name}}</span>
                             </th>
                         </tr>
                     </thead>
@@ -250,8 +240,7 @@
                                             home/{{folder.parent.full_path}}
                                         </a>
                                         {% else %}
-                                        <a href="{% url 'my-box' %}"
-                                            class="hover:text-[#027991]">home/</a>
+                                        <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home/</a>
                                         {% endif %}
                                     </span>
                                 </div>
@@ -335,7 +324,8 @@
                                 </label>
                                 <input
                                     class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-                                    id="name" name="name" type="text" maxlength="80" placeholder="Nom du Dossier" required value="{{folder.display_name}}">
+                                    id="name" name="name" type="text" maxlength="80" placeholder="Nom du Dossier"
+                                    required value="{{folder.display_name}}">
                             </div>
 
                             <div class="mb-2">
@@ -344,7 +334,8 @@
                                 </label>
                                 <textarea
                                     class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-                                    id="description" name="description" maxlength="80" placeholder="Description du Dossier">{{folder.description|default:''}}</textarea>
+                                    id="description" name="description" maxlength="80"
+                                    placeholder="Description du Dossier">{{folder.description|default:''}}</textarea>
                             </div>
                         </div>
 
@@ -457,11 +448,7 @@
                     <thead class="bg-[#ffd500]">
                         <tr>
                             <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
-                                <div>
-                                    <a href="#" class="flex items-center space-x-2 justify-between">
-                                        Dossiers récents
-                                    </a>
-                                </div>
+                                <span>Dossiers récents</span>
                             </th>
                         </tr>
                     </thead>
