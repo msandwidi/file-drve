@@ -65,7 +65,7 @@ def add_folder_to_zip(zip_file, folder, base_path):
     for file_record in folder.files.filter(is_deleted=False):
         if file_record.file:
             file_path = file_record.file.path
-            arcname = os.path.join(base_path, file_record.original_filename)
+            arcname = os.path.join(base_path, file_record.name)
             zip_file.write(file_path, arcname=arcname)
 
     # Recurse into subfolders
@@ -332,7 +332,7 @@ def view_file_content_view(request, slug):
     file_record.save()
 
     # Set inline disposition
-    response['Content-Disposition'] = f'inline; filename="{file_record.original_filename}"'
+    response['Content-Disposition'] = f'inline; filename="{file_record.name}"'
     response["X-Frame-Options"] = "SAMEORIGIN"
     return response
 
@@ -362,7 +362,7 @@ def download_file_view(request, slug):
     file_record.last_accessed_at = timezone.now()
     file_record.save()
 
-    return FileResponse(file_record.file.open('rb'), as_attachment=True, filename=file_record.original_filename)
+    return FileResponse(file_record.file.open('rb'), as_attachment=True, filename=file_record.name)
 
 def delete_folder_view(request, slug):
     """
@@ -760,7 +760,8 @@ def upload_files_view(request):
         FileRecord.objects.create(
             user=user,
             file=uploaded_file,
-            folder=folder
+            folder=folder,
+            name=uploaded_file.name
         )
 
     messages.success(request, 'Fichers sauvegardés')

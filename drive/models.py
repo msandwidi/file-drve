@@ -16,52 +16,6 @@ FOLDER_SIZE_30MB = 30 * 1024 * 1024
 MAX_FILENAME_LENGTH = 255
 MAX_SLUG_LENGTH = 255
 
-def sanitize_filename(filename):
-    """
-    Create a safe file name
-    """
-    
-    # Remove path traversal
-    filename = os.path.basename(filename)
-
-    # Normalize unicode (e.g., é → e)
-    filename = unicodedata.normalize("NFKD", filename).encode("ascii", "ignore").decode()
-
-    # Split name and extension
-    name, ext = os.path.splitext(filename)
-
-    # Replace invalid characters
-    name = re.sub(r'[^A-Za-z0-9_\-\. ]+', '', name)
-
-    # Collapse whitespace and strip
-    name = re.sub(r'\s+', '_', name).strip('_')
-
-    # Default if empty
-    timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-    if not name:
-        name = f"fichier-{timestamp}"
-
-    # Truncate name first, ensuring full extension fits
-    name = name[:MAX_FILENAME_LENGTH - len(ext)]
-    
-    return f"{name}{ext.lower()}"
-
-def user_directory_path(instance, filename):
-    """
-    Get user directory path for a file
-    """
-    
-    safe_filename = sanitize_filename(filename)
-    base, ext = os.path.splitext(safe_filename)
-
-    timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-    final_name = f"{timestamp}_{base}{ext.lower()}"
-
-    if instance.folder:
-        folder_path = instance.folder.full_path()  # ensure it's safe
-        return f"user_{instance.user.id}/{folder_path}/{final_name}"
-    return f"user_{instance.user.id}/{final_name}"
-
 def sizeof_fmt(num, suffix="B"):
     """
     Get size of a file
@@ -73,12 +27,25 @@ def sizeof_fmt(num, suffix="B"):
         num /= 1024.0
     return f"{num:.1f} Y{suffix}"
 
-class FileRecord(models.Model):
-    file = models.FileField(upload_to=user_directory_path)
+def user_hashed_upload_to(instance, filename):
+    user_id = instance.user.id
+    file_uuid = instance.file_uuid
 
-    original_filename = models.CharField(max_length=255)
+    hex_str = file_uuid.hex
+    folder1 = hex_str[:2]
+    folder2 = hex_str[2:4]
+    extension = 'dat'
+    filename = f"{hex_str}.{extension}"
+    path = os.path.join(f"user_{user_id}", folder1, folder2, filename)
+    return path
+
+class FileRecord(models.Model):
+    file = models.FileField(upload_to=user_hashed_upload_to)
+    
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
+    file_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -127,12 +94,12 @@ class FileRecord(models.Model):
     
     @property
     def file_extension(self):
-        name = self.file.name
+        name = self.name
         return os.path.splitext(name)[1].lower().lstrip('.')
     
     @property
     def display_name(self):
-        return self.original_filename
+        return self.name
     
     @property
     def type(self):
@@ -169,48 +136,22 @@ class FileRecord(models.Model):
     
     @property
     def name_without_ext(self):
-        return os.path.splitext(self.original_filename)[0]
+        return os.path.splitext(self.name)[0]
 
     class Meta:
         ordering = ['-created_at']
         
-    def rename_file(self, new_name_without_ext, desc):
-        if not self.file:
-            return
-
-        # Get original extension
-        base, ext = os.path.splitext(self.file.name)
-
-        # Generate new file path
-        new_name = f"{slugify(new_name_without_ext)}{ext.lower()}"
-        new_path = os.path.join(os.path.dirname(self.file.name), new_name)
-
-        # Save the file with the new name
-        self.file.storage.save(new_path, self.file)
-        self.file.delete(save=False)  # delete old file reference
-        self.file.name = new_path
-        
-        new_original_filename = f'{new_name_without_ext}{ext}'
-        
-        self.original_filename = new_original_filename
-        self.description = desc
-        self.last_accessed_at = timezone.now()
-        self.last_updated_at = timezone.now()
-        self.save()
-
     def __str__(self):
-        return f"{self.original_filename} by {self.user.username}"
+        return f"{self.name} by {self.user.username}"
 
     def is_expired(self):
         from django.utils import timezone
         return self.expires_at and timezone.now() > self.expires_at
 
     def save(self, *args, **kwargs):
-        if not self.original_filename:
-            self.original_filename = os.path.basename(self.file.name)
 
         if not self.slug:
-            base, ext = os.path.splitext(self.original_filename)
+            base, ext = os.path.splitext(self.name)
             base_slug = slugify(base)
             timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
             
