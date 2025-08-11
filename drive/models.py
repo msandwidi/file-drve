@@ -1,13 +1,9 @@
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.utils import timezone
-from django.db.models import Sum
 from django.db import models
-import unicodedata
 import uuid
 import os
-import re
 
 INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+' 
 RESERVED_NAMES = {'.', '..', 'con', 'nul', 'prn'}
@@ -15,6 +11,39 @@ MAX_FOLDER_DEPTH = 10
 FOLDER_SIZE_30MB = 30 * 1024 * 1024
 MAX_FILENAME_LENGTH = 255
 MAX_SLUG_LENGTH = 255
+
+def generate_slug(instance, is_folder = False):
+    """
+    Generate file slug
+    """
+
+    slug_candidate = None
+
+    if is_folder:
+        base_slug = slugify(instance.name)
+        timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+        slug_candidate = f"{base_slug}-{timestamp}"
+
+        if len(slug_candidate) > MAX_SLUG_LENGTH:
+            base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - 1]  
+            slug_candidate = f"{base_slug}-{timestamp}"
+
+    else:
+        base, ext = os.path.splitext(instance.name)
+        base_slug = slugify(base)
+        timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+        
+        # clean extension
+        ext = ext.lower().lstrip('.')
+        
+        slug_candidate = f"{base_slug}-{timestamp}-{ext}"
+
+        # Truncate if it's too long
+        if len(slug_candidate) > MAX_SLUG_LENGTH:
+            base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - len(ext) - 2]
+            slug_candidate = f"{base_slug}-{timestamp}"
+
+    return slug_candidate
 
 def sizeof_fmt(num, suffix="B"):
     """
@@ -32,18 +61,20 @@ def user_hashed_upload_to(instance, filename):
     file_uuid = instance.file_uuid
 
     hex_str = file_uuid.hex
-    folder1 = hex_str[:2]
-    folder2 = hex_str[2:4]
+    root_folder = 'uploads'
+    folder_1 = hex_str[:2]
+    folder_2 = hex_str[2:4]
     extension = 'dat'
     filename = f"{hex_str}.{extension}"
-    path = os.path.join(f"user_{user_id}", folder1, folder2, filename)
+    path = os.path.join(root_folder, f"u{user_id}", folder_1, folder_2, filename)
+
     return path
 
 class FileRecord(models.Model):
     file = models.FileField(upload_to=user_hashed_upload_to)
     
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True, max_length=1500)
 
     file_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
@@ -150,21 +181,9 @@ class FileRecord(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if not self.slug:
-            base, ext = os.path.splitext(self.name)
-            base_slug = slugify(base)
-            timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-            
-            # clean extension
-            ext = ext.lower().lstrip('.')
-            
-            slug_candidate = f"{base_slug}-{timestamp}-{ext}"
+        slug_candidate = generate_slug(self)
 
-            # Truncate if it's too long
-            if len(slug_candidate) > MAX_SLUG_LENGTH:
-                base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - len(ext) - 2]
-                slug_candidate = f"{base_slug}-{timestamp}"
-
+        if self.slug != slug_candidate:
             self.slug = slug_candidate
 
         super().save(*args, **kwargs)
@@ -282,42 +301,10 @@ class FolderRecord(models.Model):
             current = current.parent
         return depth
     
-    def clean(self):
-        if self.get_depth() > MAX_FOLDER_DEPTH:
-            raise ValidationError(f"Folder nesting too deep. Maximum allowed depth is {MAX_FOLDER_DEPTH}.")
-
-        full_path = self.full_path()
-        if len(full_path) > 4096:
-            raise ValidationError({'name': f"Full path exceeds 4096 characters. Length: {len(full_path)}"})
-
-        name = self.name.strip()
-        self.name = name  # Save cleaned name
-
-        if not name:
-            raise ValidationError({'name': "Folder name cannot be empty or just whitespace."})
-
-        if name.lower() in RESERVED_NAMES:
-            raise ValidationError({'name': f"'{name}' is a reserved folder name."})
-
-        if re.search(INVALID_FOLDER_CHARS, name):
-            raise ValidationError({'name': "Folder name contains invalid characters. Only letters, numbers, spaces, underscores and hyphens are allowed."})
-
-        if name.startswith(('/', '\\', '.')) or name.endswith(('/', '\\')):
-            raise ValidationError({'name': "Folder name cannot start or end with '/', '\\', or '.'"})
-
     def save(self, *args, **kwargs):
-        self.full_clean()
+        slug_candidate = generate_slug(self, is_folder=True)
 
-        if not self.slug:
-            base_slug = slugify(self.name)
-            timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-            slug_candidate = f"{base_slug}-{timestamp}"
-
-            # Truncate if it's too long
-            if len(slug_candidate) > MAX_SLUG_LENGTH:
-                base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - 1]  # for hyphen
-                slug_candidate = f"{base_slug}-{timestamp}"
-
+        if self.slug != slug_candidate:
             self.slug = slug_candidate
 
         super().save(*args, **kwargs)

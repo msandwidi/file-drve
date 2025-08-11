@@ -70,7 +70,7 @@
                 </label>
                 <textarea
                     class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-                    id="description" name="description" maxlength="80"
+                    id="description" name="description" maxlength="255"
                     placeholder="Description du Fichier">{{file.description|default:''}}</textarea>
             </div>
         </div>
@@ -147,6 +147,19 @@
                     </td>
                 </tr>
                 {% endif %}
+
+                <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                            </svg>
+
+                            <span>{{file.display_size}}</span>
+                        </div>
+                    </td>
+                </tr>
 
                 <tr class="shadow shadow-sm group">
                     <td class="px-2 py-1 text-sm text-gray-600">

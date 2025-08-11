@@ -10,7 +10,7 @@ venv/
 env/
 .venv/
 user_1/
-user_2/
+uploads/
 
 # Django migrations
 */migrations/*

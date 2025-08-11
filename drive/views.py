@@ -1,11 +1,13 @@
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from .models import FileRecord, FolderRecord
 from django.core.paginator import Paginator
 from django.contrib import messages
 from core.utils import is_valid_int
+from .utils import is_safe_filename, is_safe_foldername
 from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
@@ -79,6 +81,8 @@ def is_extension_safe(file):
         return False
     return ext.lower() not in FORBIDDEN_EXTENSIONS
 
+@require_http_methods(['GET'])
+@login_required
 def my_drive_view(request):
     """
     Get all user files
@@ -207,6 +211,8 @@ def my_drive_view(request):
         'recent_folders': folders.order_by('-created_at')[:10]
     })
 
+@require_http_methods(['GET'])
+@login_required
 def file_details_view(request, slug):
     """
     Get file details
@@ -217,6 +223,10 @@ def file_details_view(request, slug):
         is_deleted=False,
         user=request.user
     ).first()
+
+    print(slug)
+    print(request.user)
+    print(file)
     
     if not file:
 
@@ -234,6 +244,8 @@ def file_details_view(request, slug):
         'file': file
     })
 
+@require_http_methods(['POST'])
+@login_required
 def rename_file_view(request, slug):
     """
     Rename file
@@ -244,9 +256,17 @@ def rename_file_view(request, slug):
         is_deleted=False,
         user=request.user
     ).first()
-    
+
+    print(slug)
+    print(request.user)
+    print(file)
+
+    new_name = request.POST.get('name')
+
     if not file:
 
+        messages.warning(request, 'Fichier introuvable')
+        
         parent_slug = request.GET.get('dossier')
 
         if parent_slug:
@@ -255,17 +275,28 @@ def rename_file_view(request, slug):
         
         return redirect('my-box')
     
-    name = request.POST.get('name')
-    
-    name, _ = os.path.splitext(name)
+    if not is_safe_filename(new_name):
+        messages.warning(request, 'Nom de fichier invalide')
+        return redirect('file-details', file.slug)
+
+    name, _ = os.path.splitext(new_name)
     description = request.POST.get('description', '')
+
+    _, old_ext = os.path.splitext(file.name)
+
+    file.name = f"{name}{old_ext}"
+    file.description = description
     
-    file.rename_file(name, description)
-    
+    file.save()
+
+    file.refresh_from_db()
+
     messages.success(request, 'Sauvegardé')
 
-    return redirect('file-details', slug)
+    return redirect('file-details', file.slug)
 
+@require_http_methods(['POST'])
+@login_required
 def rename_folder_view(request, slug):
     """
     Rename folder
@@ -277,9 +308,11 @@ def rename_folder_view(request, slug):
         user=request.user
     ).first()
     
+    parent_slug = request.GET.get('dossier')
+
     if not folder:
 
-        parent_slug = request.GET.get('dossier')
+        messages.warning(request, 'Dossier introuvable')
 
         if parent_slug:
             url = reverse('my-box')
@@ -288,9 +321,21 @@ def rename_folder_view(request, slug):
         return redirect('my-box')
     
     name = request.POST.get('name')
+
+    if not is_safe_foldername(name):
+
+        messages.warning(request, 'Nom de dossier invalide')
+
+        url = reverse('my-box')
+        return redirect(f"{url}?dossier={folder.slug}")
+        
     description = request.POST.get('description', '')
     
-    folder.rename_folder(name, description)
+    folder.name = name
+    folder.description = description
+
+    folder.save()
+    folder.refresh_from_db()
 
     messages.success(request, 'Sauvegardé')
 
@@ -299,6 +344,7 @@ def rename_folder_view(request, slug):
     
 @require_http_methods(['GET'])
 @xframe_options_exempt
+@login_required
 def view_file_content_view(request, slug):
     """
     View file content
@@ -321,7 +367,7 @@ def view_file_content_view(request, slug):
         return redirect('my-box')
 
     # Determine content type
-    mime_type, _ = mimetypes.guess_type(file_record.file.name)
+    mime_type, _ = mimetypes.guess_type(file_record.name)
     if not mime_type:
         mime_type = 'application/octet-stream'
 
@@ -336,6 +382,8 @@ def view_file_content_view(request, slug):
     response["X-Frame-Options"] = "SAMEORIGIN"
     return response
 
+@require_http_methods(['GET'])
+@login_required
 def download_file_view(request, slug):
     """
     Download file
@@ -364,6 +412,8 @@ def download_file_view(request, slug):
 
     return FileResponse(file_record.file.open('rb'), as_attachment=True, filename=file_record.name)
 
+@require_http_methods(['GET'])
+@login_required
 def delete_folder_view(request, slug):
     """
     Delete folder
@@ -399,6 +449,8 @@ def delete_folder_view(request, slug):
 
     return redirect('my-box')
 
+@require_http_methods(['GET'])
+@login_required
 def delete_file_view(request, slug):
     """
     Delete file
@@ -437,6 +489,8 @@ def delete_file_view(request, slug):
 
     return redirect('my-box')
 
+@require_http_methods(['GET'])
+@login_required
 def share_folder_view(request, slug):
     """
     Share folder
@@ -483,6 +537,8 @@ def share_folder_view(request, slug):
         'items': page_obj
     })
 
+@require_http_methods(['GET'])
+@login_required
 def download_folder_view(request, slug):
     """
     Download folder
@@ -529,6 +585,8 @@ def download_folder_view(request, slug):
     response['Content-Disposition'] = f'attachment; filename="{folder.name}.zip"'
     return response
 
+@require_http_methods(['GET', 'POST'])
+@login_required
 def share_file_view(request, slug):
     """
     Share file
@@ -540,7 +598,6 @@ def share_file_view(request, slug):
         user=request.user
     ).first()
 
-    
     if not file:
         messages.warning(request, 'Fichier introuvable')
 
@@ -569,6 +626,7 @@ def share_file_view(request, slug):
     })
 
 @require_http_methods(['GET'])
+@login_required
 def toggle_favorite_view(request, slug):
     """
     Toggle favorite file or folder
@@ -621,11 +679,10 @@ def toggle_favorite_view(request, slug):
     elif file and file.folder:
         return redirect(f"{url}?dossier={file.folder.slug}")
     
-
-    
     return redirect('my-box')
 
 @require_http_methods(['POST'])
+@login_required
 def create_folder_view(request):
     """
     Create a new folder
@@ -675,6 +732,7 @@ def create_folder_view(request):
     return redirect(f"{url}?dossier={new_folder.slug}")
     
 @require_http_methods(['POST'])
+@login_required
 def upload_files_view(request):
     """
     Upload files
@@ -694,7 +752,6 @@ def upload_files_view(request):
             messages.warning(request, 'Dossier introuvalbe')
             return redirect('my-box')
     
-    uploaded_file = request.FILES.get('file')
     files = request.FILES.getlist('file')
     
     user = request.user
@@ -749,11 +806,18 @@ def upload_files_view(request):
         # check file extensions
 
         if not is_extension_safe(file):
-            messages.warning(request, "Fichiers incompatibles detectés")
+            messages.warning(request, "Fichier incompatibles detecté")
+            logger.warning(file.name)
+            return redirect(return_url)
+        
+        if not is_safe_filename(file.name):
+            messages.warning(request, "Nom de fichier invalide detecté")
+            logger.warning(file.name)
             return redirect(return_url)
 
         if file.size > ALLOWED_FILE_SIZE:
-            messages.warning(request, "Fichiers trop loarge detectés")
+            messages.warning(request, "Fichier trop large detecté")
+            logger.warning(file.name)
             return redirect(return_url)
 
     for uploaded_file in files:
@@ -767,6 +831,8 @@ def upload_files_view(request):
     messages.success(request, 'Fichers sauvegardés')
     return redirect(return_url)
 
+@require_http_methods(['GET'])
+@login_required
 def trash_bin_view(request):
     """
     View deleted files
