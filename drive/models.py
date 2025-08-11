@@ -167,6 +167,14 @@ class FileRecord(models.Model):
     @property
     def name_without_ext(self):
         return os.path.splitext(self.name)[0]
+    
+    def active_shares(self):
+        shares = self.shares.all()
+
+        return shares.filter(
+            is_deleted = False,
+            expires_at__gt = timezone.now()
+        )
 
     class Meta:
         ordering = ['-created_at']
@@ -397,9 +405,36 @@ class ShareRecord(models.Model):
         else:
             # Existing record → check if name changed
             original = type(self).objects.get(pk=self.pk)
-            if original.name != self.name:
+            if original.file and original.file != self.file.name:
+                self.slug = slug_candidate
+            
+            elif original.folder and original.folder != self.folder.name:
                 self.slug = slug_candidate
 
         super().save(*args, **kwargs)
 
-    
+class ContactRecord(models.Model):
+
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20)
+    email = models.EmailField(blank=True, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    is_imported = models.BooleanField(default=False)
+    imported_at = models.DateTimeField(null=True, blank=True)
+    imported_contact_id = models.PositiveBigIntegerField(null=True, blank=True)
+
+    user = models.ForeignKey(
+        get_user_model(), 
+        on_delete=models.CASCADE, 
+        related_name='contacts'
+    )
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"

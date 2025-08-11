@@ -35,15 +35,34 @@
     <div class="space-y-4">
         <div>
 
-            {% if not shared_with %}
+            {% if not file.active_shares %}
             <div class="flex items-start p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg space-x-3"
                 role="alert">
-                <!-- Message -->
-                <div class="text-sm">
-                    Ce dossier n’a encore été partagé avec personne.
-                </div>
+                <span class="text-sm">Ce dossier n’a encore été partagé avec personne</span>
             </div>
+            {% else %}
+            <table class="min-w-full border-b border-gray-300">
+                <thead class="bg-[#90caf9]">
+                    <tr>
+                        <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
+                            <span>Partagé avec</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
 
+                    <tr class="shadow shadow-sm group">
+                        {% for share in file.active_shares %}
+                        <td class="px-2 py-1 text-sm text-gray-600">
+                            <div class="flex items-center space-x-2">
+                                <span>{{ share.recipient }}</span>
+                            </div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+
+                </tbody>
+            </table>
             {% endif %}
         </div>
 
@@ -81,7 +100,70 @@
             </Button>
         </div>
     </div>
+    <div>
+        <div style="max-height: 600px;">
+        <table class="min-w-full border-b border-gray-300">
+            <thead class="bg-[#90caf9]">
+                <tr>
+                    <th class="px-2 py-1 text-left text-lg font-semibold border-l-2 border-gray-200">
+                        <span>Mes Contacts</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white">
+                {% if contacts %}
+                {% for contact in contacts %}
+                <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1">
+                        <div class="">
+                            <p class="font-semibold text-gray-600">{{ contact.full_name }}</p>
+                            <p class="text-sm text-gray-400">{{ contact.phone_number }}</p>
+                            <p class="text-sm text-gray-400">{{ contact.email }}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        </div>
 
+        {% if not contacts %}
+        <div class="flex items-start p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg space-x-3 mt-4"
+            role="alert">
+            <span class="text-sm">Vous n'avez aucun contact enregistré</span>
+        </div>
+        {% endif %}
+
+        <div class="bg-white px-2 py-1 mt-4">
+            <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}" class="space-y-2 max-w-3xl mb-8">
+                {% csrf_token %}
+
+                <h5>Ajouter un contact</h5>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
+                        placeholder="Nom de famille" maxlength="80">
+
+                    <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2" required
+                        placeholder="Prénom" maxlength="80">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+
+                    <input type="phone" name="phone_number" class="w-full border border-gray-300 px-3 py-2" required
+                        placeholder="Numéros de téléphon" maxlength="20">
+
+                    <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
+                        placeholder="Adresse e-mail">
+                </div>
+
+                <button type="submit" class="bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4">
+                    Ajouter
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
 

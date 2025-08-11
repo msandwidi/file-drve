@@ -19,4 +19,5 @@ urlpatterns = [
     path('fichier/<slug:slug>/download', views.download_file_view, name='download-file'),
     path('fichier/importer', views.upload_files_view, name='upload-files'),
     path('favoris/<slug:slug>', views.toggle_favorite_view, name='toggle-favorite'),
+    path('contacts', views.create_contact_view, name='create-new-contact'),
 ]

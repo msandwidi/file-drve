@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
-from .models import FileRecord, FolderRecord, ShareRecord
+from .models import FileRecord, FolderRecord, ShareRecord, ContactRecord
 from django.core.paginator import Paginator
 from django.contrib import messages
 from core.utils import is_valid_int
@@ -224,7 +224,7 @@ def my_drive_view(request):
         'folder': folder,
         'folder_slug': folder_slug,
         'page_data': page_obj,
-        'recent_folders': folders.order_by('-created_at')[:10]
+        'recent_folders': folders[:10]
     })
 
 @require_http_methods(['GET'])
@@ -633,8 +633,14 @@ def share_file_view(request, slug):
 
             return redirect('share-file', slug=slug)
         
+    contacts = ContactRecord.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )[:1500]
+        
     return render(request, 'drive/file/share-file.html', {
         'file': file,
+        'contacts': contacts
     })
 
 @require_http_methods(['GET'])
@@ -923,4 +929,54 @@ def archive_file_view(request, slug):
     messages.success(request, 'Fichier archivé')
 
     return redirect('my-trash')
+
+@require_http_methods(['POST'])
+@login_required
+def create_contact_view(request):
+    """
+    Create new contact record
+    """
     
+    file_slug = request.GET.get('file')
+    folder_slug = request.GET.get('folder')
+
+    file = None
+    folder = None
+
+    if file_slug:
+        file = FileRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+    elif folder_slug:
+        folder = FolderRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+    first_name = request.POST.get('first_name')
+    last_name = request.POST.get('last_name')
+    phone_number = request.POST.get('phone_number')
+    email = request.POST.get('email')
+
+    if first_name and last_name and phone_number:
+        ContactRecord.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number,
+            email=email,
+            user=request.user
+        )
+        messages.success(request, 'Contact enregistré')
+    else:
+        messages.warning(request, 'Données invalides')
+
+    if file:
+        return redirect('share-file', file.slug)
+    elif folder:
+        return redirect('share-folder', folder.slug)
+    else:
+        return redirect('my-box')
