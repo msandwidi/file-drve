@@ -48,10 +48,16 @@
                 <td class="px-4 py-2 text-sm text-gray-600 text-left">
                     {{file.deleted_at}}
                 </td>
-                <td class="px-4 py-2 text-sm text-gray-600">
+                <td class="px-4 py-2 text-sm text-gray-600 flex space-x-2">
                     <form method="post" action="{% url 'restore-deleted-file' file.slug %}">
                         {% csrf_token %}
-                        <button  type="submit" class="px-2 py-1 border border-gray-400 hover:bg-gray-50">Restorer</button>
+                        <button type="submit"
+                            class="px-2 py-1 border border-gray-400 hover:bg-gray-50">Restorer</button>
+                    </form>
+                    <form method="post" action="{% url 'archive-deleted-file' file.slug %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="px-2 py-1 border border-red-500 hover:bg-red-50 text-red-500">Supprimer</button>
                     </form>
                 </td>
             </tr>

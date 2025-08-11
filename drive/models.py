@@ -79,25 +79,24 @@ class FileRecord(models.Model):
     file_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    is_favorite = models.BooleanField(default=False)
 
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    
     is_shared = models.BooleanField(default=False)
     shared_at = models.DateTimeField(null=True, blank=True)
+    share_expires_at = models.DateTimeField(null=True, blank=True)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
 
     download_limit = models.IntegerField(null=True, blank=True)
     download_count = models.PositiveIntegerField(default=0)
 
+    created_at = models.DateTimeField(auto_now_add=True)
     last_accessed_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    
     last_updated_at = models.DateTimeField(auto_now_add=True)
+    is_archived = models.BooleanField(default=False)
+    archived_at = models.DateTimeField(null=True, blank=True)
     
-    expires_at = models.DateTimeField(null=True, blank=True)
-
-    is_favorite = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     
     folder = models.ForeignKey(
         'drive.FolderRecord', 
@@ -184,7 +183,7 @@ class FileRecord(models.Model):
         slug_candidate = generate_slug(self)
         
         if not self.pk:
-        # New record → always generate slug
+            # New record → always generate slug
             self.slug = slug_candidate
             
         else:
@@ -192,6 +191,10 @@ class FileRecord(models.Model):
             original = type(self).objects.get(pk=self.pk)
             if original.name != self.name:
                 self.slug = slug_candidate
+
+            if not original.is_deleted and self.is_deleted:
+                # Mark related shares as deleted
+                self.shares.update(is_deleted=True, deleted_at=timezone.now())
 
         super().save(*args, **kwargs)
 
@@ -201,19 +204,18 @@ class FolderRecord(models.Model):
     
     slug = models.SlugField(max_length=255, unique=True, blank=True)
 
+    is_favorite = models.BooleanField(default=False)
+
     is_shared = models.BooleanField(default=False)
     shared_at = models.DateTimeField(null=True, blank=True)
+    share_expires_at = models.DateTimeField(null=True, blank=True)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     
-    expires_at = models.DateTimeField(null=True, blank=True)
-    
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    is_favorite = models.BooleanField(default=False)
-    
     user = models.ForeignKey(
         get_user_model(), 
         on_delete=models.CASCADE, 
@@ -260,21 +262,6 @@ class FolderRecord(models.Model):
     def display_type(self):
         return 'dossier'
 
-    def rename_folder(self, new_name, desc):
-        base_slug = slugify(new_name)
-        timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
-        slug_candidate = f"{base_slug}-{timestamp}"
-
-        if len(slug_candidate) > MAX_SLUG_LENGTH:
-            base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - 1]  
-            slug_candidate = f"{base_slug}-{timestamp}"
-
-        self.slug = slug_candidate
-        self.description = desc
-        self.name = new_name
-        
-        self.save()
-    
     def is_over_30mb(self):
         return self.get_size() >= FOLDER_SIZE_30MB
         
@@ -313,7 +300,7 @@ class FolderRecord(models.Model):
         slug_candidate = generate_slug(self, is_folder=True)
         
         if not self.pk:
-        # New record → always generate slug
+            # New record → always generate slug
             self.slug = slug_candidate
             
         else:
@@ -321,6 +308,10 @@ class FolderRecord(models.Model):
             original = type(self).objects.get(pk=self.pk)
             if original.name != self.name:
                 self.slug = slug_candidate
+            
+            if not original.is_deleted and self.is_deleted:
+                # Mark related shares as deleted
+                self.shares.update(is_deleted=True, deleted_at=timezone.now())
 
         super().save(*args, **kwargs)
 
@@ -359,3 +350,56 @@ class FolderRecord(models.Model):
             parts.append(parent.name)
             parent = parent.parent
         return "/" + "/".join(reversed(parts))    
+
+class ShareRecord(models.Model):
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+
+    shared_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    recipient = models.ForeignKey(
+        get_user_model(), 
+        on_delete=models.CASCADE, 
+        related_name='shared_items'
+    )
+
+    file = models.ForeignKey(
+        'FileRecord', 
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE, 
+        related_name='shares'
+    )
+
+    folder = models.ForeignKey(
+        'FolderRecord',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='shares'
+    )
+
+    def save(self, *args, **kwargs):
+        
+        # default to file
+        slug_candidate = generate_slug(self.file)
+        
+        if self.folder:
+            slug_candidate = generate_slug(self.folder, is_folder=True)
+        
+        if not self.pk:
+            # New record → always generate slug
+            self.slug = slug_candidate
+            
+        else:
+            # Existing record → check if name changed
+            original = type(self).objects.get(pk=self.pk)
+            if original.name != self.name:
+                self.slug = slug_candidate
+
+        super().save(*args, **kwargs)
+
+    

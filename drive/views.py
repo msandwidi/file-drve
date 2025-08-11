@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
-from .models import FileRecord, FolderRecord
+from .models import FileRecord, FolderRecord, ShareRecord
 from django.core.paginator import Paginator
 from django.contrib import messages
 from core.utils import is_valid_int
@@ -156,11 +156,27 @@ def my_drive_view(request):
         # files shared with me
         logger.info(f'fetching {folder_slug}...')
 
-        files = FileRecord.objects.none()
+        shared_files = ShareRecord.objects.filter(
+            recipient=request.user,
+            file__isnull=False,             
+            file__is_deleted=False,    
+            file__is_shared=True,    
+            is_deleted=False,
+            expires_at__gt=timezone.now()
+        ).exclude(file__user=request.user)
 
-        # folders shared with me
-        folders = FolderRecord.objects.none()
-    
+        shared_folder = ShareRecord.objects.filter(
+            recipient=request.user,
+            folder__isnull=False,
+            folder__is_deleted=False,    
+            folder__is_shared=True,    
+            is_deleted=False,
+            expires_at__gt=timezone.now()
+        ).exclude(file__user=request.user)
+
+        files = [share.file for share in shared_files]
+        folders = [share.folder for share in shared_folder]
+
     elif folder_slug:
         logger.info('Finding folder by slog...')
 
@@ -836,7 +852,8 @@ def trash_bin_view(request):
     
     files = FileRecord.objects.filter(
         user=request.user,
-        is_deleted=True
+        is_deleted=True,
+        is_archived=False,
     ).order_by('-deleted_at')
     
     return render(request, 'drive/trash-bin.html', {
@@ -853,7 +870,8 @@ def restore_deleted_file_view(request, slug):
     file = FileRecord.objects.filter(
         slug=slug,
         user=request.user,
-        is_deleted=True
+        is_deleted=True,
+        is_archived=False,
     ).first()
     
     if not file:
@@ -876,6 +894,33 @@ def restore_deleted_file_view(request, slug):
         folder = folder.parent
     
     messages.success(request, 'Fichier restoré')
+
+    return redirect('my-trash')
+
+@require_http_methods(['POST'])
+@login_required
+def archive_file_view(request, slug):
+    """
+    Archive deleted file - permanent logical deletion
+    """
+    
+    file = FileRecord.objects.filter(
+        slug=slug,
+        user=request.user,
+        is_deleted=True,
+        is_archived=False,
+    ).first()
+    
+    if not file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('my-trash')
+    
+    file.is_archived = True
+    file.archived_at = timezone.now()
+    
+    file.save()
+    
+    messages.success(request, 'Fichier archivé')
 
     return redirect('my-trash')
     
