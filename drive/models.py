@@ -180,11 +180,18 @@ class FileRecord(models.Model):
         return self.expires_at and timezone.now() > self.expires_at
 
     def save(self, *args, **kwargs):
-
+        
         slug_candidate = generate_slug(self)
-
-        if self.slug != slug_candidate:
+        
+        if not self.pk:
+        # New record → always generate slug
             self.slug = slug_candidate
+            
+        else:
+            # Existing record → check if name changed
+            original = type(self).objects.get(pk=self.pk)
+            if original.name != self.name:
+                self.slug = slug_candidate
 
         super().save(*args, **kwargs)
 
@@ -302,10 +309,18 @@ class FolderRecord(models.Model):
         return depth
     
     def save(self, *args, **kwargs):
+        
         slug_candidate = generate_slug(self, is_folder=True)
-
-        if self.slug != slug_candidate:
+        
+        if not self.pk:
+        # New record → always generate slug
             self.slug = slug_candidate
+            
+        else:
+            # Existing record → check if name changed
+            original = type(self).objects.get(pk=self.pk)
+            if original.name != self.name:
+                self.slug = slug_candidate
 
         super().save(*args, **kwargs)
 

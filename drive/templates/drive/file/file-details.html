@@ -42,14 +42,14 @@
             home/{{file.folder.full_path}}
         </a>
         {% else %}
-        <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}" class="text-[#027991] hover:text-[#016073]">home/</a>
+        <a href="{% url 'my-box' %}" class="text-[#027991] hover:text-[#016073]">home/</a>
         {% endif %}
     </span>
 </div>
 
 <dialog id="renameFileDialog"
     class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-    <form method="post" action="{% url 'rename-file' file.slug %}">
+    <form method="post" action="{% url 'rename-file-info' slug=file.slug %}">
         {% csrf_token %}
 
         <h2 class="text-xl font-bold mb-4">Renommer le fichier</h2>

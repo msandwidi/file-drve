@@ -224,10 +224,6 @@ def file_details_view(request, slug):
         user=request.user
     ).first()
 
-    print(slug)
-    print(request.user)
-    print(file)
-    
     if not file:
 
         messages.warning(request, 'Fichier introuvable')
@@ -246,54 +242,54 @@ def file_details_view(request, slug):
 
 @require_http_methods(['POST'])
 @login_required
-def rename_file_view(request, slug):
+def rename_file_info_view(request, slug):
     """
-    Rename file
+    Rename file name
     """
     
-    file = FileRecord.objects.filter(
+    file_record = FileRecord.objects.filter(
         slug=slug,
         is_deleted=False,
         user=request.user
     ).first()
 
-    print(slug)
-    print(request.user)
-    print(file)
+    # print(slug, len(slug))
+    # print(request.user)
+    # print(file_record)
+    
+    print(repr(slug), len(slug))
+    
+    if not file_record:
+        
+        print(FileRecord.objects.filter(slug=slug))  # filter only by slug
+        print(FileRecord.objects.filter(slug=slug, user=request.user))  # slug + user
+        print(FileRecord.objects.filter(slug=slug, is_deleted=False)) 
+
+        messages.warning(request, 'Fichier introuvable')
+
+        return redirect('my-box')
 
     new_name = request.POST.get('name')
 
-    if not file:
-
-        messages.warning(request, 'Fichier introuvable')
-        
-        parent_slug = request.GET.get('dossier')
-
-        if parent_slug:
-            url = reverse('my-box')
-            return redirect(f"{url}?dossier={parent_slug}")
-        
-        return redirect('my-box')
-    
     if not is_safe_filename(new_name):
         messages.warning(request, 'Nom de fichier invalide')
-        return redirect('file-details', file.slug)
+        return redirect('file-details', file_record.slug)
 
     name, _ = os.path.splitext(new_name)
     description = request.POST.get('description', '')
 
-    _, old_ext = os.path.splitext(file.name)
+    _, old_ext = os.path.splitext(file_record.name)
 
-    file.name = f"{name}{old_ext}"
-    file.description = description
+    file_record.name = f"{name}{old_ext}"
+    file_record.description = description
     
-    file.save()
+    file_record.save()
 
-    file.refresh_from_db()
+    file_record.refresh_from_db()
 
     messages.success(request, 'Sauvegardé')
 
-    return redirect('file-details', file.slug)
+    return redirect('file-details', file_record.slug)
 
 @require_http_methods(['POST'])
 @login_required
