@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('', views.my_drive_view, name='my-box'),
     path('corbeille', views.trash_bin_view, name='my-trash'),
+    path('corbeille/<slug:slug>/restore', views.restore_deleted_file_view, name='restore-deleted-file'),
     path('nouveau-dossier', views.create_folder_view, name='new-folder'),
     path('dossier/<slug:slug>/supprimer', views.delete_folder_view, name='delete-folder'),
     path('dossier/<slug:slug>/partager', views.share_folder_view, name='share-folder'),

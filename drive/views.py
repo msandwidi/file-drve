@@ -842,3 +842,40 @@ def trash_bin_view(request):
     return render(request, 'drive/trash-bin.html', {
         'files': files[:50]
     })
+    
+@require_http_methods(['POST'])
+@login_required
+def restore_deleted_file_view(request, slug):
+    """
+    Restore deleted file
+    """
+    
+    file = FileRecord.objects.filter(
+        slug=slug,
+        user=request.user,
+        is_deleted=True
+    ).first()
+    
+    if not file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('my-trash')
+    
+    # restore file
+    file.is_deleted = False
+    file.deleted_at = None
+    
+    file.save()
+    
+    # restore all parent folders
+    folder = file.folder
+    while folder:
+        if folder.is_deleted:
+            folder.is_deleted = False
+            folder.deleted_at = None
+            folder.save()
+        folder = folder.parent
+    
+    messages.success(request, 'Fichier restoré')
+
+    return redirect('my-trash')
+    
