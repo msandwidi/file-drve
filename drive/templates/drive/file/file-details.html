@@ -83,6 +83,28 @@
     </form>
 </dialog>
 
+<div class="flex items-center space-x-2 mt-4 md:hidden">
+    <button id="renameFileBtn"
+        class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+        Renommer
+    </button>
+
+    <a href="{% url 'share-file' file.slug %}"
+        class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+        Partager
+    </a>
+
+    <a href="{% url 'download-file' file.slug %}"
+        class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+        Telecharger
+    </a>
+
+    <a href="{% url 'delete-file' file.slug %}"
+        class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
+        Supprimer
+    </a>
+</div>
+
 <div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
     <div>
         {% include 'partials/view-file.html' with file=file %}
@@ -153,7 +175,8 @@
                         <div class="flex items-center space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="w-4 h-4 shrink-0">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
                             </svg>
 
                             <span>{{file.display_size}}</span>
@@ -175,7 +198,7 @@
                     </td>
                 </tr>
 
-                <tr class="shadow-sm group">
+                <tr class="shadow-sm group hidden md:table-row">
                     <td class="px-2 py-2 text-sm text-gray-600">
                         <div class="w-full space-y-3">
                             <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">

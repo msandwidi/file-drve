@@ -840,7 +840,7 @@ def trash_bin_view(request):
     ).order_by('-deleted_at')
     
     return render(request, 'drive/trash-bin.html', {
-        'files': files[:50]
+        'files': files[:100]
     })
     
 @require_http_methods(['POST'])
