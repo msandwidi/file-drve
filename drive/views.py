@@ -1,6 +1,7 @@
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from .models import FileRecord, FolderRecord, ShareRecord, ContactRecord
@@ -961,22 +962,40 @@ def create_contact_view(request):
     last_name = request.POST.get('last_name')
     phone_number = request.POST.get('phone_number')
     email = request.POST.get('email')
-
-    if first_name and last_name and phone_number:
-        ContactRecord.objects.create(
-            first_name=first_name,
-            last_name=last_name,
-            phone_number=phone_number,
-            email=email,
-            user=request.user
-        )
-        messages.success(request, 'Contact enregistré')
-    else:
+    
+    if not (first_name and last_name and phone_number):
         messages.warning(request, 'Données invalides')
-
+        return redirect('my-box')
+    
+    contact = ContactRecord.objects.create(
+        first_name=first_name,
+        last_name=last_name,
+        phone_number=phone_number,
+        email=email,
+        user=request.user
+    )
+    
+    messages.success(request, 'Contact enregistré')
+    
+    # find recipient account
+    recipient = User.objects.filter(email=email).first()
+    
     if file:
+        ShareRecord.objects.create(
+            file=file,
+            expires_at=file.share_expires_at,
+            recipient=recipient,
+            contact=contact
+        )
         return redirect('share-file', file.slug)
+    
     elif folder:
+        ShareRecord.objects.create(
+            folder=folder,
+            expires_at=folder.share_expires_at,
+            recipient=recipient,
+            contact=contact
+        )
         return redirect('share-folder', folder.slug)
     else:
         return redirect('my-box')

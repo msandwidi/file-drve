@@ -171,10 +171,7 @@ class FileRecord(models.Model):
     def active_shares(self):
         shares = self.shares.all()
 
-        return shares.filter(
-            is_deleted = False,
-            expires_at__gt = timezone.now()
-        )
+        return shares.filter(is_deleted = False)
 
     class Meta:
         ordering = ['-created_at']
@@ -361,17 +358,25 @@ class FolderRecord(models.Model):
 
 class ShareRecord(models.Model):
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-
+    
     shared_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    contact = models.ForeignKey(
+        'ContactRecord', 
+        on_delete=models.CASCADE, 
+        related_name='shared_items',
+    )
+    
     recipient = models.ForeignKey(
         get_user_model(), 
         on_delete=models.CASCADE, 
-        related_name='shared_items'
+        related_name='shared_items',
+        blank=True,
+        null=True
     )
 
     file = models.ForeignKey(
@@ -389,7 +394,17 @@ class ShareRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='shares'
     )
-
+    
+    def __str__(self):
+        name = ''
+        
+        if self.file:
+            name = self.file.name
+        else:
+            name = self.folder.name
+            
+        return f"{self.contact.full_name} - {name}"
+        
     def save(self, *args, **kwargs):
         
         # default to file
