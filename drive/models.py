@@ -449,6 +449,9 @@ class ContactRecord(models.Model):
         on_delete=models.CASCADE, 
         related_name='contacts'
     )
+    
+    class Meta:
+        ordering = ['first_name']
 
     @property
     def full_name(self):

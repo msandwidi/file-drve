@@ -999,3 +999,79 @@ def create_contact_view(request):
         return redirect('share-folder', folder.slug)
     else:
         return redirect('my-box')
+    
+@require_http_methods(['GET'])
+@login_required
+def add_contact_to_shared_item_view(request, contact_id):
+    """
+    Add contact to file or folder
+    """
+    
+    contact = ContactRecord.objects.filter(
+        id=contact_id,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not contact:
+        messages.warning(request, 'Contact introuvable')
+        return redirect('my-box')
+    
+    file_slug = request.GET.get('file')
+    folder_slug = request.GET.get('folder')
+
+    file = None
+    folder = None
+
+    if file_slug:        
+        file = FileRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+    elif folder_slug:
+        folder = FolderRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+        
+    recipient = User.objects.filter(email=contact.email).first()
+
+    if file:
+        existing_record = ShareRecord.objects.filter(
+            is_deleted=False,
+            contact=contact,
+            file=file
+        ).first()
+        
+        if not existing_record:
+            ShareRecord.objects.create(
+                file=file,
+                expires_at=file.share_expires_at,
+                recipient=recipient,
+                contact=contact
+            )
+            
+        return redirect('share-file', file.slug)
+    
+    elif folder:
+        existing_record = ShareRecord.objects.filter(
+            is_deleted=False,
+            contact=contact,
+            folder=folder
+        ).first()
+        
+        if not existing_record:
+            ShareRecord.objects.create(
+                folder=folder,
+                expires_at=folder.share_expires_at,
+                recipient=recipient,
+                contact=contact
+            )
+            
+        return redirect('share-folder', folder.slug)
+    
+    else:
+        return redirect('my-box')

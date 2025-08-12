@@ -31,10 +31,9 @@
     </span>
 </div>
 
-<div class="grid md:grid-cols-[5fr_3fr] sm:grid-cols-1 gap-2 mt-4">
+<div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
     <div class="space-y-4">
-        <div>
-
+        <div class="max-h-96 overflow-y-auto">
             {% if not file.active_shares %}
             <div class="flex items-start p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg space-x-3"
                 role="alert">
@@ -45,21 +44,25 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-2 py-1 text-left text-lg font-semibold border-l-2 border-gray-200">
-                            <span>Partagé avec</span>
+                            {% if  file.active_shares|length > 1%}
+                            <span>Partagé avec {{file.active_shares|length}} personnes</span>
+                            {% else %}
+                            <span>Partagé avec {{file.active_shares|length}} personne</span>
+                            {% endif %}
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
 
+                    {% for share in file.active_shares %}
                     <tr class="shadow shadow-sm group">
-                        {% for share in file.active_shares %}
                         <td class="px-2 py-1 text-sm text-gray-600">
                             <div class="flex items-center space-x-2">
                                 <span>{{ share.contact.full_name }}</span>
                             </div>
                         </td>
-                        {% endfor %}
                     </tr>
+                    {% endfor %}
 
                 </tbody>
             </table>
@@ -90,7 +93,7 @@
         </div>
     </div>
     <div>
-        <div style="max-height: 600px;">
+        <div class="max-h-96 overflow-y-auto">
             <table class="min-w-full border-b border-gray-300">
                 <thead class="bg-[#90caf9]">
                     <tr>
@@ -103,12 +106,14 @@
                     {% if contacts %}
                     {% for contact in contacts %}
                     <tr class="shadow shadow-sm group">
-                        <td class="px-2 py-1">
-                            <div class="">
+                        <td class="px-2 py-1 flex space-x-2 items-center justify-between">
+                            <div>
                                 <p class="font-semibold text-gray-600">{{ contact.full_name }}</p>
                                 <p class="text-sm text-gray-400">{{ contact.phone_number }}</p>
                                 <p class="text-sm text-gray-400">{{ contact.email }}</p>
                             </div>
+
+                            <a href="{% url 'add-contact-to-item' contact.id %}?file={{file.slug}}" class="px-2 py-1 border border-gray-400 text-gray-700 text-sm text-center hover:bg-gray-50">Ajouter</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -124,16 +129,16 @@
         </div>
         {% endif %}
 
-        <div class="bg-white px-2 py-1 mt-4">
+        <div class="bg-white px-2 py-2 mt-4">
             <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}"
-                class="space-y-2 max-w-3xl mb-8">
+                class="space-y-2 max-w-3xl">
                 {% csrf_token %}
 
                 <h5>Ajouter un contact</h5>
 
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
-                        placeholder="Nom de famille" maxlength="80">
+                        placeholder="Nom" maxlength="80">
 
                     <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2" required
                         placeholder="Prénom" maxlength="80">
@@ -142,13 +147,13 @@
                 <div class="grid grid-cols-2 gap-2">
 
                     <input type="phone" name="phone_number" class="w-full border border-gray-300 px-3 py-2" required
-                        placeholder="Numéros de téléphon" maxlength="20">
+                        placeholder="Téléphon" maxlength="20">
 
                     <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
-                        placeholder="Adresse e-mail">
+                        placeholder="E-mail">
                 </div>
 
-                <button type="submit" class="bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4">
+                <button type="submit" class="w-full bg-[#027991] hover:bg-[#016073] text-white font-bold py-1 px-4">
                     Ajouter
                 </button>
             </form>
