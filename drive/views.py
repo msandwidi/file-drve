@@ -960,17 +960,15 @@ def create_contact_view(request):
 
     first_name = request.POST.get('first_name')
     last_name = request.POST.get('last_name')
-    phone_number = request.POST.get('phone_number')
     email = request.POST.get('email')
     
-    if not (first_name and last_name and phone_number):
+    if not (first_name and last_name and email):
         messages.warning(request, 'Données invalides')
         return redirect('my-box')
     
     contact = ContactRecord.objects.create(
         first_name=first_name,
         last_name=last_name,
-        phone_number=phone_number,
         email=email,
         user=request.user
     )
@@ -987,6 +985,12 @@ def create_contact_view(request):
             recipient=recipient,
             contact=contact
         )
+
+        if not file.is_shared:
+            file.is_shared = True
+            file.shared_at = timezone.now()
+            file.save()
+
         return redirect('share-file', file.slug)
     
     elif folder:
@@ -996,6 +1000,12 @@ def create_contact_view(request):
             recipient=recipient,
             contact=contact
         )
+
+        if not folder.is_shared:
+            folder.is_shared = True
+            folder.shared_at = timezone.now()
+            folder.save()
+
         return redirect('share-folder', folder.slug)
     else:
         return redirect('my-box')
@@ -1053,6 +1063,11 @@ def add_contact_to_shared_item_view(request, contact_id):
                 recipient=recipient,
                 contact=contact
             )
+
+            if not file.is_shared:
+                file.is_shared = True
+                file.shared_at = timezone.now()
+                file.save()
             
         return redirect('share-file', file.slug)
     
@@ -1070,6 +1085,11 @@ def add_contact_to_shared_item_view(request, contact_id):
                 recipient=recipient,
                 contact=contact
             )
+
+            if not folder.is_shared:
+                folder.is_shared = True
+                folder.shared_at = timezone.now()
+                folder.save()
             
         return redirect('share-folder', folder.slug)
     
