@@ -947,8 +947,8 @@ def create_contact_view(request):
     
     file_slug = request.GET.get('file')
     folder_slug = request.GET.get('folder')
-    group_id = request.GET.get('group')
-    groups_ids = request.POST.getlist('groups', [])
+    group_id = request.GET.get('group', '')
+    groups_ids = [int(pk) for pk in request.POST.getlist('groups', []) if pk.strip()]
 
     file = None
     folder = None
@@ -986,9 +986,6 @@ def create_contact_view(request):
             is_deleted=False,
             user=request.user
         )
-
-    print('groups ids', groups_ids)
-    print('groups', groups)
 
     first_name = request.POST.get('first_name')
     last_name = request.POST.get('last_name')
@@ -1349,3 +1346,78 @@ def edit_contact_group_view(request, group_id):
 
     return redirect(f'{url}?group={group.pk}')
 
+@require_http_methods(['POST'])
+@login_required
+def add_contact_group_to_item_view(request):
+    
+    file_slug = request.GET.get('file')
+    folder_slug = request.GET.get('folder')
+    groups_ids = [int(pk) for pk in request.POST.getlist('groups', []) if pk.strip()]
+
+    file = None
+    folder = None
+    groups = list()
+
+    if file_slug:
+        file = FileRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+    elif folder_slug:
+        folder = FolderRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+    if groups_ids:
+        groups = ContactGroup.objects.filter(
+            id__in=groups_ids,
+            is_deleted=False,
+            user=request.user
+        )
+        
+    contacts = ContactDetails.objects.filter(groups__in=groups).distinct()
+    
+    if file:
+        
+        for contact in contacts:
+            share, created = ShareRecord.objects.get_or_create(
+                contact=contact,
+                file=file,
+                defaults={'is_deleted': False}
+            )
+            
+            if not created and share.is_deleted:
+                share.is_deleted = False
+                share.deleted_at = None
+                share.save()
+        
+        messages.success(request, 'Contact ajouté')
+            
+        return redirect('share-file', file.slug)
+    
+    elif folder:
+        
+        for contact in contacts:
+            share, created = ShareRecord.objects.get_or_create(
+                contact=contact,
+                folder=folder,
+                defaults={'is_deleted': False}
+            )
+            
+            if not created and share.is_deleted:
+                share.is_deleted = False
+                share.deleted_at = None
+                share.save()
+            
+            messages.success(request, 'Contact ajouté')
+
+        return redirect('share-folder', folder.slug)
+    
+    
+    messages.success(request, 'Groupe supprimé')
+
+    return redirect('my-contacts')

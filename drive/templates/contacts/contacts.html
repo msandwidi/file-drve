@@ -23,24 +23,46 @@
                     <h5>Ajouter un contact</h5>
 
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
-                            placeholder="Nom" maxlength="80">
+                        <div>
+                            <label class="block text-gray-600 text-sm font-semibold mb-2" for="last_name">
+                                Nom
+                            </label>
+                            <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
+                                placeholder="Nom" maxlength="80">
+                        </div>
 
-                        <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2" required
-                            placeholder="Prénom" maxlength="80">
+                        <div>
+                            <label class="block text-gray-600 text-sm font-semibold mb-2" for="first_name">
+                                Prénom
+                            </label>
+
+                            <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2"
+                                required placeholder="Prénom" maxlength="80">
+                        </div>
                     </div>
 
-                    <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
-                        placeholder="Adresse e-mail" required>
+                    <div>
+                        <label class="block text-gray-600 text-sm font-semibold mb-2" for="email">
+                            E-mail
+                        </label>
+                        <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
+                            placeholder="Adresse e-mail" required>
+                    </div>
 
                     {% if contact_groups %}
-                    <select name="groups" multiple
-                        class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none mt-2">
-                        <option value="" selected>Groupes</option>
-                        {% for grp in contact_groups %}
-                        <option value="{{grp.id}}" {% if grp.id == group.id %}selected{% endif %}>{{grp.name}}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="mt-2">
+                        <label class="block text-gray-600 text-sm font-semibold mb-2" for="groups">
+                            Groupes
+                        </label>
+                        <select name="groups" multiple
+                            class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none">
+                            {% for grp in contact_groups %}
+                            <option value="{{grp.id}}" {% if grp.id == group.id %}selected{% endif %}>{{grp.name}}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     {% endif %}
                 </div>
 

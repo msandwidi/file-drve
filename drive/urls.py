@@ -25,6 +25,7 @@ urlpatterns = [
     path('contacts/groups/<int:group_id>/details', views.contact_group_details_view, name='contact-group-details'),
     path('contacts/groups/<int:group_id>/edit', views.edit_contact_group_view, name='edit-contact-group'),
     path('contacts/groups/<int:group_id>/delete', views.delete_contact_group_view, name='delete-contact-group'),
+    path('contacts/groups/add-to-item', views.add_contact_group_to_item_view, name='add-contact-group-to-shared-item'),
     path('contacts/<int:contact_id>/add-to-item', views.add_contact_to_shared_item_view, name='add-contact-to-item'),
     path('contacts/<int:contact_id>/remove-from-item', views.remove_contact_from_shared_item_view, name='remove-contact-from-item'),
 ]

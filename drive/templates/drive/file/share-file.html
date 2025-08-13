@@ -150,7 +150,7 @@
                 {% if contact_groups %}
                 <button type="button" id="selectContactGroupBtn"
                     class="w-full bg-[#027991] hover:bg-[#016073] text-white font-bold py-1 px-4 shadow shadow-md">
-                    Selectionner un Groupe
+                    Selectionner des Groupes
                 </button>
                 {% endif %}
             </div>
@@ -164,24 +164,46 @@
                         <h5>Ajouter un contact</h5>
 
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
-                                placeholder="Nom" maxlength="80">
+                            <div>
+                                <label class="block text-gray-600 text-sm font-semibold mb-2" for="last_name">
+                                    Nom
+                                </label>
+                                <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2"
+                                    required placeholder="Nom" maxlength="80">
+                            </div>
 
-                            <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2"
-                                required placeholder="Prénom" maxlength="80">
+                            <div>
+                                <label class="block text-gray-600 text-sm font-semibold mb-2" for="first_name">
+                                    Prénom
+                                </label>
+
+                                <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2"
+                                    required placeholder="Prénom" maxlength="80">
+                            </div>
                         </div>
 
-                        <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
-                            placeholder="Adresse e-mail" required>
+                        <div>
+                            <label class="block text-gray-600 text-sm font-semibold mb-2" for="email">
+                                E-mail
+                            </label>
+                            <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
+                                placeholder="Adresse e-mail" required>
+                        </div>
 
                         {% if contact_groups %}
-                        <select name="groups" multiple
-                            class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none mt-2">
-                            <option value="" selected>Groupes</option>
-                            {% for grp in contact_groups %}
-                            <option value="{{grp.id}}">{{grp.name}}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="mt-2">
+                            <label class="block text-gray-600 text-sm font-semibold mb-2" for="groups">
+                                Groupes
+                            </label>
+                            <select name="groups" multiple
+                                class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none">
+                                {% for grp in contact_groups %}
+                                <option value="{{grp.id}}">{{grp.name}}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
                         {% endif %}
                     </div>
 
@@ -198,11 +220,11 @@
 
             <dialog id="selectContactGroupDialog"
                 class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-                <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}">
+                <form method="post" action="{% url 'add-contact-group-to-shared-item' %}?file={{file.slug}}">
                     {% csrf_token %}
 
                     <div class="space-y-2">
-                        <h5>Selectionner un Groupe</h5>
+                        <h5>Selectionner les Groupes</h5>
 
                         <select name="groups" multiple required
                             class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none mt-2">

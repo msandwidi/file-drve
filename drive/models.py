@@ -20,18 +20,21 @@ def generate_slug(instance, is_folder = False):
     slug_candidate = None
 
     if is_folder:
-        base_slug = slugify(instance.name)
-        timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+        folder_uuid = f'{instance.folder_uuid}'
+        base_slug = slugify(f"{instance.name}-{folder_uuid[:5]}")
+        timestamp = timezone.now().strftime("%Y%m%d%H%M%S%f")
         slug_candidate = f"{base_slug}-{timestamp}"
 
         if len(slug_candidate) > MAX_SLUG_LENGTH:
-            base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - 1]  
-            slug_candidate = f"{base_slug}-{timestamp}"
+            base_slug = slugify(instance.name)
+            base_slug = base_slug[:MAX_SLUG_LENGTH - len(folder_uuid[:8]) - len(timestamp) - 2]  
+            slug_candidate = f"{base_slug}-{folder_uuid[:8]}-{timestamp}"
 
     else:
+        file_uuid = f'{instance.file_uuid}'
         base, ext = os.path.splitext(instance.name)
-        base_slug = slugify(base)
-        timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+        base_slug = slugify(f"{base}-{file_uuid[:5]}")
+        timestamp = timezone.now().strftime("%Y%m%d%H%M%S%f")
         
         # clean extension
         ext = ext.lower().lstrip('.')
@@ -40,8 +43,9 @@ def generate_slug(instance, is_folder = False):
 
         # Truncate if it's too long
         if len(slug_candidate) > MAX_SLUG_LENGTH:
-            base_slug = base_slug[:MAX_SLUG_LENGTH - len(timestamp) - len(ext) - 2]
-            slug_candidate = f"{base_slug}-{timestamp}"
+            base_slug = slugify(base)
+            base_slug = base_slug[:MAX_SLUG_LENGTH - len(file_uuid[:8]) - len(timestamp) - len(ext) - 3]
+            slug_candidate = f"{base_slug}-{file_uuid[:8]}-{timestamp}"
 
     return slug_candidate
 
@@ -208,6 +212,7 @@ class FolderRecord(models.Model):
     description = models.CharField(max_length=255, null=True, blank=True)
     
     slug = models.SlugField(max_length=255, unique=True, blank=True)
+    folder_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     is_favorite = models.BooleanField(default=False)
 
