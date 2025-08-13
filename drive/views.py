@@ -941,9 +941,11 @@ def create_contact_view(request):
     
     file_slug = request.GET.get('file')
     folder_slug = request.GET.get('folder')
+    group_id = request.GET.get('group')
 
     file = None
     folder = None
+    group = None
 
     if file_slug:
         file = FileRecord.objects.filter(
@@ -959,6 +961,17 @@ def create_contact_view(request):
             user=request.user
         ).first()
 
+    if group_id:
+        group = ContactGroup.objects.filter(
+            id=group_id,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+        if not group:
+            messages.warning(request, 'Groupe introuvable')
+            return redirect('my-contacts')
+
     first_name = request.POST.get('first_name')
     last_name = request.POST.get('last_name')
     email = request.POST.get('email')
@@ -970,9 +983,12 @@ def create_contact_view(request):
     contact = ContactDetails.objects.create(
         first_name=first_name,
         last_name=last_name,
+        user=request.user,
         email=email,
-        user=request.user
     )
+
+    if group:
+        contact.groups.add(group)
     
     messages.success(request, 'Contact enregistré')
     
@@ -1009,6 +1025,10 @@ def create_contact_view(request):
 
         return redirect('share-folder', folder.slug)
     
+    elif group:
+        url = reverse('my-contacts')
+        return redirect(f'{url}?group={group.pk}')
+
     else:
         return redirect('my-contacts')
     
@@ -1179,11 +1199,11 @@ def all_contacts_view(request):
     else:
         page = 1
         
-    group_id = request.GET.get('group_id')
-    group=None
+    group_id = request.GET.get('group')
+    group = None
         
     if group_id:
-        group = ContactDetails.objects.filter(
+        group = ContactGroup.objects.filter(
             is_deleted=False,
             user=request.user,
             id=group_id
@@ -1193,11 +1213,7 @@ def all_contacts_view(request):
             messages.warning(request, 'Groupe introuvable')
             return redirect('my-contacts')
         
-        contacts = ContactDetails.objects.filter(
-            is_deleted=False,
-            user=request.user,
-            group=group
-        )
+        contacts = group.contacts.all()
         
     else:
         contacts = ContactDetails.objects.filter(
@@ -1218,3 +1234,92 @@ def all_contacts_view(request):
         'groups': groups,
         'group': group,
     })
+
+
+@require_http_methods(['POST'])
+@login_required
+def create_contact_group_view(request):
+    """
+    Create new contact group
+    """
+    
+    name = request.POST.get('name')
+    description = request.POST.get('description')
+    
+    if not name:
+        messages.warning(request, 'Données invalides')
+        return redirect('my-contacts')
+    
+    group = ContactGroup.objects.create(
+        name=name,
+        description=description,
+        user=request.user
+    )
+    
+    messages.success(request, 'Groupe enregistré')
+
+    url = reverse('my-contacts')
+
+    return redirect(f'{url}?group={group.pk}')
+
+@require_http_methods(['GET'])
+@login_required
+def contact_group_details_view(request, group_id):
+    return redirect('my-contacts')
+
+@require_http_methods(['POST'])
+@login_required
+def delete_contact_group_view(request, group_id):
+
+    group = ContactGroup.objects.filter(
+        id=group_id,
+        is_deleted=False,
+        user=request.user
+    ).first()
+        
+    if not group:
+        messages.warning(request, 'Groupe introuvable')
+        return redirect('my-contacts')
+    
+    group.is_deleted = True
+    group.deleted_at = timezone.now()
+    group.save()
+
+    # remove all contacts from the group
+    group.contacts.clear()
+    
+    messages.success(request, 'Groupe supprimé')
+
+    return redirect('my-contacts')
+
+@require_http_methods(['POST'])
+@login_required
+def edit_contact_group_view(request, group_id):
+
+    group = ContactGroup.objects.filter(
+        id=group_id,
+        is_deleted=False,
+        user=request.user
+    ).first()
+        
+    if not group:
+        messages.warning(request, 'Groupe introuvable')
+        return redirect('my-contacts')
+    
+    name = request.POST.get('name')
+    description = request.POST.get('description')
+
+    if not name:
+        messages.warning(request, 'Données invalides')
+        return redirect('my-contacts')
+    
+    group.name = name
+    group.description = description
+    group.save()
+
+    messages.success(request, 'Groupe enregistré')
+
+    url = reverse('my-contacts')
+
+    return redirect(f'{url}?group={group.pk}')
+

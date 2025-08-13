@@ -443,11 +443,9 @@ class ContactDetails(models.Model):
     imported_at = models.DateTimeField(null=True, blank=True)
     imported_contact_id = models.PositiveBigIntegerField(null=True, blank=True)
 
-    group = models.ForeignKey(
-        'ContactGroup', 
-        on_delete=models.CASCADE, 
-        related_name='groups',
-        null=True,
+    groups = models.ManyToManyField(
+        'ContactGroup',  
+        related_name='contacts',
         blank=True
     )
 
@@ -463,7 +461,9 @@ class ContactDetails(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
-
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
 
 class ContactGroup(models.Model):
 
@@ -487,3 +487,6 @@ class ContactGroup(models.Model):
     @property
     def full_name(self):
         return f"{self.name} {self.user.username}"
+    
+    def __str__(self):
+        return self.name

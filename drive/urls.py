@@ -20,7 +20,11 @@ urlpatterns = [
     path('fichier/importer', views.upload_files_view, name='upload-files'),
     path('favoris/<slug:slug>', views.toggle_favorite_view, name='toggle-favorite'),
     path('contacts', views.all_contacts_view, name='my-contacts'),
-    path('contacts/nouveau', views.create_contact_view, name='create-new-contact'),
+    path('contacts/new', views.create_contact_view, name='create-new-contact'),
+    path('contacts/groups/new', views.create_contact_group_view, name='create-contact-group'),
+    path('contacts/groups/<int:group_id>/details', views.contact_group_details_view, name='contact-group-details'),
+    path('contacts/groups/<int:group_id>/edit', views.edit_contact_group_view, name='edit-contact-group'),
+    path('contacts/groups/<int:group_id>/delete', views.delete_contact_group_view, name='delete-contact-group'),
     path('contacts/<int:contact_id>/add-to-item', views.add_contact_to_shared_item_view, name='add-contact-to-item'),
     path('contacts/<int:contact_id>/remove-from-item', views.remove_contact_from_shared_item_view, name='remove-contact-from-item'),
 ]
