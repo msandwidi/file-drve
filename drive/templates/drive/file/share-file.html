@@ -101,7 +101,7 @@
                 <thead class="bg-[#90caf9]">
                     <tr>
                         <th class="px-2 py-1 text-left text-lg font-semibold border-l-2 border-gray-200">
-                            <span>Mes Contacts</span>
+                            <a href="{% url 'my-contacts' %}">Mes Contacts</a>
                         </th>
                     </tr>
                 </thead>
@@ -138,28 +138,92 @@
         </div>
         {% endif %}
 
-        <div class="bg-white px-2 py-1 mt-4">
-            <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}" class="space-y-2">
-                {% csrf_token %}
+        {% if contacts %}
+        <div class="bg-white px-2 mt-4">
 
-                <h5>Ajouter un contact</h5>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
-                        placeholder="Nom" maxlength="80">
-
-                    <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2" required
-                        placeholder="Prénom" maxlength="80">
-                </div>
-
-                <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
-                    placeholder="Adresse e-mail" required>
-
-                <button type="submit" class="w-full bg-[#027991] hover:bg-[#016073] text-white font-bold py-1 px-4">
-                    Ajouter
+            <div class="flex flex-col space-y-2">
+                <button type="button" id="addNewContactBtn"
+                    class="w-full bg-[#027991] hover:bg-[#016073] text-white font-bold py-1 px-4 shadow shadow-md">
+                    Ajouter un Contact
                 </button>
-            </form>
+
+                {% if contact_groups %}
+                <button type="button" id="selectContactGroupBtn"
+                    class="w-full bg-[#027991] hover:bg-[#016073] text-white font-bold py-1 px-4 shadow shadow-md">
+                    Selectionner un Groupe
+                </button>
+                {% endif %}
+            </div>
+
+            <dialog id="addNewContactDialog"
+                class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
+                <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}">
+                    {% csrf_token %}
+
+                    <div class="space-y-2">
+                        <h5>Ajouter un contact</h5>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" name="last_name" class="w-full border border-gray-300 px-3 py-2" required
+                                placeholder="Nom" maxlength="80">
+
+                            <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2"
+                                required placeholder="Prénom" maxlength="80">
+                        </div>
+
+                        <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
+                            placeholder="Adresse e-mail" required>
+
+                        {% if contact_groups %}
+                        <select name="groups" multiple
+                            class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none mt-2">
+                            <option value="" selected>Groupes</option>
+                            {% for grp in contact_groups %}
+                            <option value="{{grp.id}}">{{grp.name}}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" id="closeAddNewContactBtn"
+                            class="border-4 border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-semibold py-1.5 px-4">Annuler</button>
+
+                        <button type="submit"
+                            class="bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4 border border-black">Ajouter</button>
+                    </div>
+
+                </form>
+            </dialog>
+
+            <dialog id="selectContactGroupDialog"
+                class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
+                <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}">
+                    {% csrf_token %}
+
+                    <div class="space-y-2">
+                        <h5>Selectionner un Groupe</h5>
+
+                        <select name="groups" multiple required
+                            class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none mt-2">
+                            {% for grp in contact_groups %}
+                            <option value="{{grp.id}}">{{grp.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" id="closeSelectContactGroupBtn"
+                            class="border-4 border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-semibold py-1.5 px-4">Annuler</button>
+
+                        <button type="submit"
+                            class="bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4 border border-black">Ajouter</button>
+                    </div>
+
+                </form>
+            </dialog>
         </div>
+        {% endif %}
     </div>
 
 </div>

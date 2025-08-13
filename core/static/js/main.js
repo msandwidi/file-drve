@@ -57,6 +57,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeEditContactGroup = document.getElementById('closeEditContactGroup');
   const editContactGroupDialog = document.getElementById('editContactGroupDialog');
 
+  const selectContactGroupBtn = document.getElementById('selectContactGroupBtn');
+  const closeSelectContactGroupBtn = document.getElementById('closeSelectContactGroupBtn');
+  const selectContactGroupDialog = document.getElementById('selectContactGroupDialog');
+
+  selectContactGroupBtn?.addEventListener('click', () => {
+    selectContactGroupDialog.showModal();
+  });
+
+  closeSelectContactGroupBtn?.addEventListener('click', () => {
+    selectContactGroupDialog.close();
+  });
+
   editContactGroupBtn?.addEventListener('click', () => {
     editContactGroupDialog.showModal();
   });

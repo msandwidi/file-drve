@@ -94,8 +94,7 @@
                                 <a href="{% url 'file-details' item.slug %}"
                                     class="text-sm flex space-x-2 items-center">
 
-                                    {% include 'partials/record-icon.html' with
-                                    display_type_group=item.display_type_group %}
+                                    {% include 'partials/record-icon.html' with display_type_group=item.display_type_group %}
 
                                     <span class="text-sm text-gray-600">{{item.display_name}}</span>
                                 </a>

@@ -639,10 +639,16 @@ def share_file_view(request, slug):
         is_deleted=False,
         user=request.user
     )[:1500]
+
+    contact_groups = ContactGroup.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )
         
     return render(request, 'drive/file/share-file.html', {
         'file': file,
-        'contacts': contacts
+        'contacts': contacts,
+        'contact_groups': contact_groups
     })
 
 @require_http_methods(['GET'])
@@ -942,10 +948,12 @@ def create_contact_view(request):
     file_slug = request.GET.get('file')
     folder_slug = request.GET.get('folder')
     group_id = request.GET.get('group')
+    groups_ids = request.POST.getlist('groups', [])
 
     file = None
     folder = None
     group = None
+    groups = list()
 
     if file_slug:
         file = FileRecord.objects.filter(
@@ -971,6 +979,16 @@ def create_contact_view(request):
         if not group:
             messages.warning(request, 'Groupe introuvable')
             return redirect('my-contacts')
+    
+    if groups_ids:
+        groups = ContactGroup.objects.filter(
+            id__in=groups_ids,
+            is_deleted=False,
+            user=request.user
+        )
+
+    print('groups ids', groups_ids)
+    print('groups', groups)
 
     first_name = request.POST.get('first_name')
     last_name = request.POST.get('last_name')
@@ -987,8 +1005,8 @@ def create_contact_view(request):
         email=email,
     )
 
-    if group:
-        contact.groups.add(group)
+    if groups:
+        contact.groups.set(groups)
     
     messages.success(request, 'Contact enregistré')
     
@@ -1090,6 +1108,8 @@ def add_contact_to_shared_item_view(request, contact_id):
                 file.is_shared = True
                 file.shared_at = timezone.now()
                 file.save()
+
+            messages.success(request, 'Contact ajouté')
             
         return redirect('share-file', file.slug)
     
@@ -1113,6 +1133,8 @@ def add_contact_to_shared_item_view(request, contact_id):
                 folder.shared_at = timezone.now()
                 folder.save()
             
+            messages.success(request, 'Contact ajouté')
+
         return redirect('share-folder', folder.slug)
     
     else:
@@ -1166,6 +1188,8 @@ def remove_contact_from_shared_item_view(request, contact_id):
             deleted_at=timezone.now()
         )
         
+        messages.success(request, 'Contact enlevé')
+        
         return redirect('share-file', file.slug)
     
     elif folder:
@@ -1177,6 +1201,8 @@ def remove_contact_from_shared_item_view(request, contact_id):
             is_deleted=True,
             deleted_at=timezone.now()
         )
+
+        messages.success(request, 'Contact enlevé')
         
         return redirect('share-folder', folder.slug)
     
@@ -1221,7 +1247,7 @@ def all_contacts_view(request):
             user=request.user
         )
     
-    groups = ContactGroup.objects.filter(
+    contact_groups = ContactGroup.objects.filter(
         is_deleted=False,
         user=request.user
     )
@@ -1231,7 +1257,7 @@ def all_contacts_view(request):
     
     return render(request, 'contacts/contacts.html', {
         'contacts': page_obj,
-        'groups': groups,
+        'contact_groups': contact_groups,
         'group': group,
     })
 
