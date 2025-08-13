@@ -1,4 +1,4 @@
-from .models import FileRecord, FolderRecord, ShareRecord, ContactRecord
+from .models import FileRecord, FolderRecord, ShareRecord, ContactDetails, ContactGroup
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -635,7 +635,7 @@ def share_file_view(request, slug):
 
             return redirect('share-file', slug=slug)
         
-    contacts = ContactRecord.objects.filter(
+    contacts = ContactDetails.objects.filter(
         is_deleted=False,
         user=request.user
     )[:1500]
@@ -967,7 +967,7 @@ def create_contact_view(request):
         messages.warning(request, 'Données invalides')
         return redirect('my-box')
     
-    contact = ContactRecord.objects.create(
+    contact = ContactDetails.objects.create(
         first_name=first_name,
         last_name=last_name,
         email=email,
@@ -1008,8 +1008,9 @@ def create_contact_view(request):
             folder.save()
 
         return redirect('share-folder', folder.slug)
+    
     else:
-        return redirect('my-box')
+        return redirect('my-contacts')
     
 @require_http_methods(['GET'])
 @login_required
@@ -1018,7 +1019,7 @@ def add_contact_to_shared_item_view(request, contact_id):
     Add contact to file or folder
     """
     
-    contact = ContactRecord.objects.filter(
+    contact = ContactDetails.objects.filter(
         id=contact_id,
         is_deleted=False,
         user=request.user
@@ -1105,7 +1106,7 @@ def remove_contact_from_shared_item_view(request, contact_id):
     Remove contact from file or folder
     """
     
-    contact = ContactRecord.objects.filter(
+    contact = ContactDetails.objects.filter(
         id=contact_id,
         is_deleted=False,
         user=request.user
@@ -1162,3 +1163,58 @@ def remove_contact_from_shared_item_view(request, contact_id):
     else:
         return redirect('my-box')
     
+@require_http_methods(['GET'])
+@login_required
+def all_contacts_view(request):
+    
+    page_size = request.GET.get('page_size', '50')
+    if is_valid_int(page_size):
+        page_size = int(page_size)
+    else:
+        page_size = 50
+    
+    page = request.GET.get('page', '1')
+    if is_valid_int(page):
+        page = int(page) 
+    else:
+        page = 1
+        
+    group_id = request.GET.get('group_id')
+    group=None
+        
+    if group_id:
+        group = ContactDetails.objects.filter(
+            is_deleted=False,
+            user=request.user,
+            id=group_id
+        ).first()
+        
+        if not group:
+            messages.warning(request, 'Groupe introuvable')
+            return redirect('my-contacts')
+        
+        contacts = ContactDetails.objects.filter(
+            is_deleted=False,
+            user=request.user,
+            group=group
+        )
+        
+    else:
+        contacts = ContactDetails.objects.filter(
+            is_deleted=False,
+            user=request.user
+        )
+    
+    groups = ContactGroup.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )
+    
+    paginator = Paginator(contacts, page_size) 
+    page_obj = paginator.get_page(page)
+    
+    return render(request, 'contacts/contacts.html', {
+        'contacts': page_obj,
+        'groups': groups,
+        'group': group,
+    })

@@ -33,10 +33,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeNewGroupBtn = document.getElementById('closeNewGroupBtn');
   const addNewGroupDialog = document.getElementById('addNewGroupDialog');
 
-  const addNewContactBtn = document.getElementById('addNewContactBtn');
-  const closeAddNewContactForm = document.getElementById('closeAddNewContactForm');
-  const addNewContactForm = document.getElementById('addNewContactForm');
-
   const uploadFilesDialogBtn = document.getElementById('uploadFilesDialogBtn');
   const closeUploadFilesDialogBtn = document.getElementById('closeUploadFilesDialogBtn');
   const uploadFilesDialogForm = document.getElementById('uploadFilesDialog');
@@ -49,6 +45,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeRenameFolderBtn = document.getElementById('closeRenameFolderBtn');
   const renameFolderDialog = document.getElementById('renameFolderDialog');
 
+  const addNewContactBtn = document.getElementById('addNewContactBtn');
+  const closeAddNewContactBtn = document.getElementById('closeAddNewContactBtn');
+  const addNewContactDialog = document.getElementById('addNewContactDialog');
+
+  addNewContactBtn?.addEventListener('click', () => {
+    addNewContactDialog.showModal();
+  });
+
+  closeAddNewContactBtn?.addEventListener('click', () => {
+    addNewContactDialog.close();
+  });
+
   renameFolderBtn?.addEventListener('click', () => {
     renameFolderDialog.showModal();
   });
@@ -56,7 +64,6 @@ document.addEventListener("DOMContentLoaded", function () {
   closeRenameFolderBtn?.addEventListener('click', () => {
     renameFolderDialog.close();
   });
-
 
   renameFileBtn?.addEventListener('click', () => {
     renameFileDialog.showModal();
@@ -72,14 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   closeUploadFilesDialogBtn?.addEventListener('click', () => {
     uploadFilesDialogForm.close();
-  });
-
-  addNewContactBtn?.addEventListener('click', () => {
-    addNewContactForm.showModal();
-  });
-
-  closeAddNewContactForm?.addEventListener('click', () => {
-    addNewContactForm.close();
   });
 
   addNewGroupBtn?.addEventListener('click', () => {

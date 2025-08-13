@@ -366,7 +366,7 @@ class ShareRecord(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     contact = models.ForeignKey(
-        'ContactRecord', 
+        'ContactDetails', 
         on_delete=models.CASCADE, 
         related_name='shared_items',
     )
@@ -428,7 +428,7 @@ class ShareRecord(models.Model):
 
         super().save(*args, **kwargs)
 
-class ContactRecord(models.Model):
+class ContactDetails(models.Model):
 
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -443,6 +443,14 @@ class ContactRecord(models.Model):
     imported_at = models.DateTimeField(null=True, blank=True)
     imported_contact_id = models.PositiveBigIntegerField(null=True, blank=True)
 
+    group = models.ForeignKey(
+        'ContactGroup', 
+        on_delete=models.CASCADE, 
+        related_name='groups',
+        null=True,
+        blank=True
+    )
+
     user = models.ForeignKey(
         get_user_model(), 
         on_delete=models.CASCADE, 
@@ -455,3 +463,27 @@ class ContactRecord(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+
+class ContactGroup(models.Model):
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(max_length=1500)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    user = models.ForeignKey(
+        get_user_model(), 
+        on_delete=models.CASCADE, 
+        related_name='contact_groups'
+    )
+    
+    class Meta:
+        ordering = ['name']
+
+    @property
+    def full_name(self):
+        return f"{self.name} {self.user.username}"

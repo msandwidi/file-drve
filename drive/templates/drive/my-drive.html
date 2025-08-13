@@ -7,7 +7,7 @@
 
 <div>
 
-    <div class="">
+    <div>
         <button id="uploadFilesDialogBtn"
             class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-1.5 font-semibold">
             Importer
@@ -53,7 +53,9 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
-                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home</a>/ {% for path_data in folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}" class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %} /{%endif%}</a>{% endfor %}
+                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home</a>/ {% for path_data in  folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}"
+                                class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %}
+                                /{%endif%}</a>{% endfor %}
                         </th>
                         <th class="w-[20%] md:w-[12%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Type
@@ -92,7 +94,8 @@
                                 <a href="{% url 'file-details' item.slug %}"
                                     class="text-sm flex space-x-2 items-center">
 
-                                    {% include 'partials/record-icon.html' with display_type_group=item.display_type_group %}
+                                    {% include 'partials/record-icon.html' with
+                                    display_type_group=item.display_type_group %}
 
                                     <span class="text-sm text-gray-600">{{item.display_name}}</span>
                                 </a>
@@ -267,9 +270,10 @@
                         <tr class="shadow shadow-sm group">
                             <td class="px-2 py-1 text-sm text-gray-600">
                                 <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                        stroke="currentColor" class="w-4 h-4 shrink-0">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-4 h-4 shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
                                     </svg>
 
                                     <span>{{folder.display_size}}</span>
@@ -520,6 +524,25 @@
                         un
                         dossier</button>
                 </div>
+            </div>
+
+            <div id="my-contacts" class="mt-4">
+                <table class="min-w-full border-b border-gray-300">
+                    <tbody class="bg-white">
+                        <tr class="shadow shadow-sm group hover:bg-gray-50">
+                            <td class="px-2 py-1 text-sm text-gray-600">
+                                <a href="{% url 'my-contacts' %}"
+                                    class="text-gray-600 hover:text-gray-700 text-sm flex space-x-2 items-center truncate overflow-hidden whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000"class="h-v w-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                    </svg>
+
+                                    <span>Mes Contacts</span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
         </div>
