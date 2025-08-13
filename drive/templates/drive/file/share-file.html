@@ -31,7 +31,7 @@
     </span>
 </div>
 
-<div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
+<div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] lg:grid-cols-3 gap-2 mt-4">
     <div class="space-y-4">
         <div class="max-h-96 overflow-y-auto">
             {% if not file.active_shares %}
@@ -52,14 +52,22 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white">
+                <tbody class="bg-white" id="active-shares-tbody">
 
                     {% for share in file.active_shares %}
                     <tr class="shadow shadow-sm group">
                         <td class="px-2 py-1 text-sm text-gray-600">
-                            <div class="flex items-center space-x-2">
-                                <span>{{ share.contact.full_name }}</span>
+                            <div class="flex items-center space-x-2 justify-between">
+                                <div class="flex flex-col min-w-0">
+                                    <p class="font-semibold text-gray-600 truncate">{{ share.contact.full_name }}</p>
+                                    <p class="text-sm text-gray-400 truncate">{{ share.contact.email }}</p>
+                                </div>
+
+                                <a href="{% url 'remove-contact-from-item' share.contact.id %}?file={{file.slug}}"
+                                    class="border border-red-500 px-2 hover:bg-red-50 text-red-500">Enlever</a>
+
                             </div>
+
                         </td>
                     </tr>
                     {% endfor %}
@@ -80,21 +88,12 @@
 
                 <h4 class="text-lg font-semibold">Copier le lien</h4>
             </Button>
-            <Button type="button"
-                class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
-                </svg>
-
-                <h4 class="text-lg font-semibold">Envoyer une copie</h4>
-            </Button>
         </div>
     </div>
-    <div>
+    <div class="min-w-0">
+        <!-- table wrapper (optional overflow) -->
         <div class="max-h-96 overflow-y-auto">
-            <table class="min-w-full border-b border-gray-300">
+            <table class="w-full table-fixed border-b border-gray-300">
                 <thead class="bg-[#90caf9]">
                     <tr>
                         <th class="px-2 py-1 text-left text-lg font-semibold border-l-2 border-gray-200">
@@ -105,15 +104,21 @@
                 <tbody class="bg-white">
                     {% if contacts %}
                     {% for contact in contacts %}
-                    <tr class="shadow shadow-sm group">
-                        <td class="px-2 py-1 flex space-x-2 items-center justify-between">
-                            <div>
-                                <p class="font-semibold text-gray-600">{{ contact.full_name }}</p>
-                                <p class="text-sm text-gray-400">{{ contact.email }}</p>
-                            </div>
+                    <tr>
+                        <td class="px-2 py-1">
+                            <div class="flex items-center justify-between space-x-2 min-w-0">
+                                <!-- text container: min-w-0 so it can shrink; truncate for ellipsis -->
+                                <div class="flex flex-col min-w-0">
+                                    <p class="font-semibold text-gray-600 truncate">{{ contact.full_name }}</p>
+                                    <p class="text-sm text-gray-400 truncate">{{ contact.email }}</p>
+                                </div>
 
-                            <a href="{% url 'add-contact-to-item' contact.id %}?file={{file.slug}}"
-                                class="px-2 py-1 border border-gray-400 text-gray-700 text-sm text-center hover:bg-gray-50">Ajouter</a>
+                                <a href="{% url 'add-contact-to-item' contact.id %}?file={{file.slug}}"
+                                    class="flex-shrink-0 px-2 py-1 border border-gray-400 text-gray-700 text-sm hover:bg-gray-50">
+                                    Ajouter
+                                </a>
+
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -143,7 +148,8 @@
                         placeholder="Prénom" maxlength="80">
                 </div>
 
-                <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2" placeholder="Adresse e-mail" required>
+                <input type="email" name="email" class="w-full border border-gray-300 px-3 py-2"
+                    placeholder="Adresse e-mail" required>
 
                 <button type="submit" class="w-full bg-[#027991] hover:bg-[#016073] text-white font-bold py-1 px-4">
                     Ajouter
@@ -151,7 +157,8 @@
             </form>
         </div>
     </div>
+    <div class="hidden lg:block">
+        {% include 'partials/view-file.html' with file=file %}
+    </div>
 </div>
-
-
 {% endblock %}

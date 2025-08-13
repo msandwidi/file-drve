@@ -1,14 +1,15 @@
+from .models import FileRecord, FolderRecord, ShareRecord, ContactRecord
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.http import FileResponse, HttpResponse
+from .utils import is_safe_filename, is_safe_foldername
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect
-from .models import FileRecord, FolderRecord, ShareRecord, ContactRecord
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.contrib import messages
 from core.utils import is_valid_int
-from .utils import is_safe_filename, is_safe_foldername
 from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
@@ -1095,3 +1096,69 @@ def add_contact_to_shared_item_view(request, contact_id):
     
     else:
         return redirect('my-box')
+    
+ 
+@require_http_methods(['GET'])
+@login_required
+def remove_contact_from_shared_item_view(request, contact_id):
+    """
+    Remove contact from file or folder
+    """
+    
+    contact = ContactRecord.objects.filter(
+        id=contact_id,
+        is_deleted=False,
+        user=request.user
+    ).first()
+    
+    if not contact:
+        messages.warning(request, 'Contact introuvable')
+        return redirect('my-box')
+    
+    file_slug = request.GET.get('file')
+    folder_slug = request.GET.get('folder')
+
+    file = None
+    folder = None
+
+    if file_slug:        
+        file = FileRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+    elif folder_slug:
+        folder = FolderRecord.objects.filter(
+            slug=file_slug,
+            is_deleted=False,
+            user=request.user
+        ).first()
+        
+    if file:
+        ShareRecord.objects.filter(
+            is_deleted=False,
+            contact=contact,
+            file=file
+        ).update(
+            is_deleted=True,
+            deleted_at=timezone.now()
+        )
+        
+        return redirect('share-file', file.slug)
+    
+    elif folder:
+        ShareRecord.objects.filter(
+            is_deleted=False,
+            contact=contact,
+            folder=folder
+        ).update(
+            is_deleted=True,
+            deleted_at=timezone.now()
+        )
+        
+        return redirect('share-folder', folder.slug)
+    
+    else:
+        return redirect('my-box')
+    

@@ -21,4 +21,5 @@ urlpatterns = [
     path('favoris/<slug:slug>', views.toggle_favorite_view, name='toggle-favorite'),
     path('contacts', views.create_contact_view, name='create-new-contact'),
     path('contacts/<int:contact_id>/add-to-item', views.add_contact_to_shared_item_view, name='add-contact-to-item'),
+    path('contacts/<int:contact_id>/remove-from-item', views.remove_contact_from_shared_item_view, name='remove-contact-from-item'),
 ]
