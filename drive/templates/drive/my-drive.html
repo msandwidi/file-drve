@@ -36,9 +36,9 @@
         <div class="w-full">
             <form action="#" method="POST" class="flex items-center w-full">
                 {% csrf_token %}
-                <input type="text" name="search_term" placeholder="Entrer le nom du fichier pour chercher"
-                    class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 text-sm outline-none" required
-                    maxlength="1500" />
+                <input type="text" name="search_term" 
+                    placeholder="Entrer le nom du fichier pour chercher"
+                    class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 text-sm outline-none" required  maxlength="30" value="{{search_term|default:''}}" />
                 <button type="submit"
                     class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-2 font-semibold">
                     Chercher

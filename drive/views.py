@@ -13,6 +13,7 @@ from core.utils import is_valid_int
 from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
+from django.db.models import Q
 import mimetypes
 import logging
 import zipfile
@@ -83,7 +84,7 @@ def is_extension_safe(file):
         return False
     return ext.lower() not in FORBIDDEN_EXTENSIONS
 
-@require_http_methods(['GET'])
+@require_http_methods(['GET', 'POST'])
 @login_required
 def my_drive_view(request):
     """
@@ -101,120 +102,146 @@ def my_drive_view(request):
         page = int(page) 
     else:
         page = 1
-        
-    folder_slug = request.GET.get('dossier')
-    
+
+    if page_size == 50:
+        page_size = 50
+
     folder = None
+    folder_slug = None
+    search_term = None
     files=list()
     folders=list()
-        
-    if folder_slug == 'fichiers-recents':
-        # recent files
-        logger.info(f'fetching {folder_slug}...')
 
-        files = FileRecord.objects.filter(
-            user=request.user,
-            is_deleted=False,
-        ).order_by('-last_accessed_at')
+    if request.method == 'POST':
+        # search for files and folders
+        search_term = request.POST.get('search_term')
 
-        # always return empty result
-        folders = FolderRecord.objects.none()
-
-    elif folder_slug == 'favoris':
-        # favorite folders
-        logger.info(f'fetching {folder_slug}...')
-
-        files = FileRecord.objects.filter(
-            user=request.user,
-            is_deleted=False,
-            is_favorite=True,
-        )
-
-        # favorite folders
-        folders = FolderRecord.objects.filter(
-            is_deleted=False,
-            user=request.user,
-            is_favorite=True,
-        )
-
-    elif folder_slug == 'partages':
-        # shared folders
-        logger.info(f'fetching {folder_slug}...')
-
-        files = FileRecord.objects.filter(
-            user=request.user,
-            is_deleted=False,
-            is_shared=True,
-        )
-
-        # shared folders
-        folders = FolderRecord.objects.filter(
-            is_deleted=False,
-            user=request.user,
-            is_shared=True,
-        )
-        
-    elif folder_slug == 'partages-avec-moi':
-        # files shared with me
-        logger.info(f'fetching {folder_slug}...')
-
-        shared_files = ShareRecord.objects.filter(
-            recipient=request.user,
-            file__isnull=False,             
-            file__is_deleted=False,    
-            file__is_shared=True,    
-            is_deleted=False,
-            expires_at__gt=timezone.now()
-        ).exclude(file__user=request.user)
-
-        shared_folder = ShareRecord.objects.filter(
-            recipient=request.user,
-            folder__isnull=False,
-            folder__is_deleted=False,    
-            folder__is_shared=True,    
-            is_deleted=False,
-            expires_at__gt=timezone.now()
-        ).exclude(file__user=request.user)
-
-        files = [share.file for share in shared_files]
-        folders = [share.folder for share in shared_folder]
-
-    elif folder_slug:
-        logger.info('Finding folder by slog...')
-
-        folder = FolderRecord.objects.filter(
-            slug=folder_slug,
-            user=request.user,
-            is_deleted=False,
-        ).first()
-
-        if not folder:
-            messages.warning(request, 'Dossier introuvable')
-            return redirect('my-box')
-        
-        logger.info(f'fetching folder {folder_slug} content...')
-
-        files = folder.files.all().filter(is_deleted=False)
-        
-        folders = folder.subfolders.all().filter(is_deleted=False)
+        if search_term:
+            files = FileRecord.objects.filter(
+                Q(name__icontains=search_term) |
+                Q(description__icontains=search_term),
+                user=request.user,
+                is_deleted=False
+            )
+            
+            folders = FolderRecord.objects.filter(
+                Q(name__icontains=search_term) |
+                Q(description__icontains=search_term),
+                user=request.user,
+                is_deleted=False
+            )
 
     else:
-        logger.info(f'fetching root folders and files...')
 
-        # root files
-        files = FileRecord.objects.filter(
-            user=request.user,
-            is_deleted=False,
-            folder=None
-        )
+        folder_slug = request.GET.get('dossier')
+                    
+        if folder_slug == 'fichiers-recents':
+            # recent files
+            logger.info(f'fetching {folder_slug}...')
 
-        # root folders
-        folders = FolderRecord.objects.filter(
-            is_deleted=False,
-            user=request.user,
-            parent=None
-        )
-                        
+            files = FileRecord.objects.filter(
+                user=request.user,
+                is_deleted=False,
+            ).order_by('-last_accessed_at')
+
+            # always return empty result
+            folders = FolderRecord.objects.none()
+
+        elif folder_slug == 'favoris':
+            # favorite folders
+            logger.info(f'fetching {folder_slug}...')
+
+            files = FileRecord.objects.filter(
+                user=request.user,
+                is_deleted=False,
+                is_favorite=True,
+            )
+
+            # favorite folders
+            folders = FolderRecord.objects.filter(
+                is_deleted=False,
+                user=request.user,
+                is_favorite=True,
+            )
+
+        elif folder_slug == 'partages':
+            # shared folders
+            logger.info(f'fetching {folder_slug}...')
+
+            files = FileRecord.objects.filter(
+                user=request.user,
+                is_deleted=False,
+                is_shared=True,
+            )
+
+            # shared folders
+            folders = FolderRecord.objects.filter(
+                is_deleted=False,
+                user=request.user,
+                is_shared=True,
+            )
+            
+        elif folder_slug == 'partages-avec-moi':
+            # files shared with me
+            logger.info(f'fetching {folder_slug}...')
+
+            shared_files = ShareRecord.objects.filter(
+                recipient=request.user,
+                file__isnull=False,             
+                file__is_deleted=False,    
+                file__is_shared=True,    
+                is_deleted=False,
+                expires_at__gt=timezone.now()
+            ).exclude(file__user=request.user)
+
+            shared_folder = ShareRecord.objects.filter(
+                recipient=request.user,
+                folder__isnull=False,
+                folder__is_deleted=False,    
+                folder__is_shared=True,    
+                is_deleted=False,
+                expires_at__gt=timezone.now()
+            ).exclude(file__user=request.user)
+
+            files = [share.file for share in shared_files]
+            folders = [share.folder for share in shared_folder]
+
+        elif folder_slug:
+            logger.info('Finding folder by slog...')
+
+            folder = FolderRecord.objects.filter(
+                slug=folder_slug,
+                user=request.user,
+                is_deleted=False,
+            ).first()
+
+            if not folder:
+                messages.warning(request, 'Dossier introuvable')
+                return redirect('my-box')
+            
+            logger.info(f'fetching folder {folder_slug} content...')
+
+            files = folder.files.all().filter(is_deleted=False)
+            
+            folders = folder.subfolders.all().filter(is_deleted=False)
+
+        else:
+            logger.info(f'fetching root folders and files...')
+
+            # root files
+            files = FileRecord.objects.filter(
+                user=request.user,
+                is_deleted=False,
+                folder=None
+            )
+
+            # root folders
+            folders = FolderRecord.objects.filter(
+                is_deleted=False,
+                user=request.user,
+                parent=None
+            )
+                            
     items = list(folders) + list(files)
         
     paginator = Paginator(items, page_size) 
@@ -226,7 +253,8 @@ def my_drive_view(request):
         'folder': folder,
         'folder_slug': folder_slug,
         'page_data': page_obj,
-        'recent_folders': folders[:10]
+        'recent_folders': folders[:10],
+        'search_term': search_term
     })
 
 @require_http_methods(['GET'])
@@ -1040,13 +1068,127 @@ def create_contact_view(request):
 
         return redirect('share-folder', folder.slug)
     
-    elif group:
+    elif group and group.id in groups_ids:
         url = reverse('my-contacts')
         return redirect(f'{url}?group={group.pk}')
 
     else:
         return redirect('my-contacts')
     
+@require_http_methods(['POST'])
+@login_required
+def edit_contact_view(request, contact_id):
+    """
+    Edit contact details
+    """
+    
+    contact = ContactDetails.objects.filter(
+        id=contact_id,
+        is_deleted=False,
+        user=request.user
+    ).first()
+
+    if not contact:
+        messages.warning(request, 'Contact introuvable')
+        return redirect('my-contacts')
+
+    group_id = request.GET.get('group', '')
+    groups_ids = [int(pk) for pk in request.POST.getlist('groups', []) if pk.strip()]
+
+    group = None
+    groups = list()
+
+    if group_id:
+        group = ContactGroup.objects.filter(
+            id=group_id,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+        if not group:
+            messages.warning(request, 'Groupe introuvable')
+            return redirect('my-contacts')
+
+    first_name = request.POST.get('first_name')
+    last_name = request.POST.get('last_name')
+    email = request.POST.get('email')
+    groups_ids = [int(pk) for pk in request.POST.getlist('groups', []) if pk.strip()]
+
+    if not (first_name and last_name and email):
+        messages.warning(request, 'Données invalides')
+        return redirect('my-box')
+    
+    if groups_ids:
+        groups = ContactGroup.objects.filter(
+            id__in=groups_ids,
+            is_deleted=False,
+            user=request.user
+        )
+    
+    contact.first_name = first_name
+    contact.last_name = last_name
+    contact.email = email
+    contact.save()
+
+    contact.groups.set(groups)
+    
+    messages.success(request, 'Contact mis à jour')
+    
+    if group and group.id in groups_ids:
+        url = reverse('my-contacts')
+        return redirect(f'{url}?group={group.pk}')
+
+    else:
+        return redirect('my-contacts')
+    
+@require_http_methods(['POST'])
+@login_required
+def delete_contact_view(request, contact_id):
+    """
+    Delete contact
+    """
+    
+    contact = ContactDetails.objects.filter(
+        id=contact_id,
+        is_deleted=False,
+        user=request.user
+    ).first()
+
+    if not contact:
+        messages.warning(request, 'Contact introuvable')
+        return redirect('my-contacts')
+
+    group_id = request.GET.get('group', '')
+
+    group = None
+
+    if group_id:
+        group = ContactGroup.objects.filter(
+            id=group_id,
+            is_deleted=False,
+            user=request.user
+        ).first()
+
+        if not group:
+            messages.warning(request, 'Groupe introuvable')
+            return redirect('my-contacts')
+
+    contact.is_deleted = True
+    contact.deleted_at = timezone.now()
+    contact.save()
+
+    # exit all groups
+    contact.groups.clear()
+    
+    messages.success(request, 'Contact supprimé')
+    
+    if group:
+        url = reverse('my-contacts')
+        return redirect(f'{url}?group={group.pk}')
+
+    else:
+        return redirect('my-contacts')
+
 @require_http_methods(['GET'])
 @login_required
 def add_contact_to_shared_item_view(request, contact_id):
@@ -1206,7 +1348,7 @@ def remove_contact_from_shared_item_view(request, contact_id):
     else:
         return redirect('my-box')
     
-@require_http_methods(['GET'])
+@require_http_methods(['GET', 'POST'])
 @login_required
 def all_contacts_view(request):
     
@@ -1221,28 +1363,51 @@ def all_contacts_view(request):
         page = int(page) 
     else:
         page = 1
+
+    if page_size > 50:
+        page_size = 50
         
-    group_id = request.GET.get('group')
+    group_id = None
     group = None
-        
-    if group_id:
-        group = ContactGroup.objects.filter(
-            is_deleted=False,
-            user=request.user,
-            id=group_id
-        ).first()
-        
-        if not group:
-            messages.warning(request, 'Groupe introuvable')
-            return redirect('my-contacts')
-        
-        contacts = group.contacts.all()
-        
+    search_term = None
+    contacts = list()
+
+    if request.method == 'POST':
+
+        search_term = request.POST.get('search_term')
+
+        if search_term:
+            contacts = ContactDetails.objects.filter(
+                Q(first_name__icontains=search_term) |
+                Q(last_name__icontains=search_term) |
+                Q(email__icontains=search_term),
+                user=request.user,
+                is_deleted=False
+            )
     else:
-        contacts = ContactDetails.objects.filter(
-            is_deleted=False,
-            user=request.user
-        )
+
+        group_id = request.GET.get('group')
+        
+        if group_id:
+            group = ContactGroup.objects.filter(
+                is_deleted=False,
+                user=request.user,
+                id=group_id
+            ).first()
+            
+            if not group:
+                messages.warning(request, 'Groupe introuvable')
+                return redirect('my-contacts')
+            
+            contacts = group.contacts.all().filter(
+                is_deleted=False
+            )
+            
+        else:
+            contacts = ContactDetails.objects.filter(
+                is_deleted=False,
+                user=request.user
+            )
     
     contact_groups = ContactGroup.objects.filter(
         is_deleted=False,
@@ -1256,6 +1421,7 @@ def all_contacts_view(request):
         'contacts': page_obj,
         'contact_groups': contact_groups,
         'group': group,
+        'search_term': search_term
     })
 
 
