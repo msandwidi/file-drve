@@ -174,7 +174,6 @@ class FileRecord(models.Model):
     
     def active_shares(self):
         shares = self.shares.all()
-
         return shares.filter(is_deleted = False)
 
     class Meta:
@@ -246,6 +245,10 @@ class FolderRecord(models.Model):
         
     def __str__(self):
         return self.name
+    
+    def active_shares(self):
+        shares = self.shares.all()
+        return shares.filter(is_deleted = False)
     
     @property
     def display_size(self):

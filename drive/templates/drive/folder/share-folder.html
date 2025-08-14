@@ -1,15 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Sahel Box | Partage un fichier - {{file.display_name}}{% endblock %}
+{% block title %}Sahel Box | Partage de dossier - {{folder.display_name}}{% endblock %}
 
 {% block content %}
-<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-[#027991] mb-4">Partager un fichier</h1>
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-[#027991] mb-4">Partager un dossier</h1>
 
 <div class="flex items-center space-x-2">
-    {% include 'partials/record-icon.html' with display_type_group=file.display_type_group %}
     <h1 class="text-md md:text-lg lg:text-xl font-semibold text-gray-500">
-        <a href="{% url 'file-details' file.slug %}" class="hover:text-[#027991]">
-            {{file.display_name}}
+        <a href="{% url 'my-box' %}?folder={{folder.slug}}" class="hover:text-[#027991]">
+            {{folder.display_name}}
         </a>
     </h1>
 </div>
@@ -21,20 +20,16 @@
     </svg>
 
     <span>
-        {% if file.folder %}
-        <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}" class="text-[#027991] hover:text-[#016073]">
-            home/{{file.folder.full_path}}
+        <a href="{% url 'my-box' %}?dossier={{folder.slug}}" class="text-[#027991] hover:text-[#016073]">
+            home/{{folder.full_path}}
         </a>
-        {% else %}
-        <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}" class="text-[#027991] hover:text-[#016073]">home/</a>
-        {% endif %}
     </span>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-2 mt-4">
     <div class="space-y-4">
         <div class="max-h-96 overflow-y-auto">
-            {% if not file.active_shares %}
+            {% if not folder.active_shares %}
             <div class="flex items-start p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg space-x-3"
                 role="alert">
                 <span class="text-sm">Ce dossier n’a encore été partagé avec personne</span>
@@ -44,17 +39,17 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-2 py-1 text-left text-lg font-semibold border-l-2 border-gray-200">
-                            {% if file.active_shares|length > 1%}
-                            <span>Partagé avec {{file.active_shares|length}} personnes</span>
+                            {% if folder.active_shares|length > 1%}
+                            <span>Partagé avec {{folder.active_shares|length}} personnes</span>
                             {% else %}
-                            <span>Partagé avec {{file.active_shares|length}} personne</span>
+                            <span>Partagé avec {{folder.active_shares|length}} personne</span>
                             {% endif %}
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white" id="active-shares-tbody">
 
-                    {% for share in file.active_shares %}
+                    {% for share in folder.active_shares %}
                     <tr class="shadow shadow-sm group">
                         <td class="px-2 py-1 text-sm text-gray-600">
                             <div class="flex items-center space-x-2 justify-between">
@@ -63,7 +58,7 @@
                                     <p class="text-sm text-gray-400 truncate">{{ share.contact.email }}</p>
                                 </div>
 
-                                <a href="{% url 'remove-contact-from-item' share.contact.id %}?file={{file.slug}}"
+                                <a href="{% url 'remove-contact-from-item' share.contact.id %}?folder={{folder.slug}}"
                                     class="border border-red-500 px-2 hover:bg-red-50 text-red-500">Enlever</a>
 
                             </div>
@@ -91,7 +86,7 @@
         </div>
 
         <div class="hidden lg:block">
-            {% include 'partials/view-file.html' with file=file %}
+            Folder content view
         </div>
     </div>
     <div class="min-w-0">
@@ -117,7 +112,7 @@
                                     <p class="text-sm text-gray-400 truncate">{{ contact.email }}</p>
                                 </div>
 
-                                <a href="{% url 'add-contact-to-item' contact.id %}?file={{file.slug}}"
+                                <a href="{% url 'add-contact-to-item' contact.id %}?folder={{folder.slug}}"
                                     class="flex-shrink-0 px-2 py-1 border border-gray-400 text-gray-700 text-sm hover:bg-gray-50">
                                     Ajouter
                                 </a>
@@ -157,7 +152,7 @@
 
             <dialog id="addNewContactDialog"
                 class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-                <form method="post" action="{% url 'create-new-contact' %}?file={{file.slug}}">
+                <form method="post" action="{% url 'create-new-contact' %}?folder={{folder.slug}}">
                     {% csrf_token %}
 
                     <div class="space-y-2">
@@ -220,7 +215,7 @@
 
             <dialog id="selectContactGroupDialog"
                 class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-                <form method="post" action="{% url 'add-contact-group-to-shared-item' %}?file={{file.slug}}">
+                <form method="post" action="{% url 'add-contact-group-to-shared-item' %}?folder={{folder.slug}}">
                     {% csrf_token %}
 
                     <div class="space-y-2">
@@ -249,4 +244,5 @@
     </div>
 
 </div>
+
 {% endblock %}

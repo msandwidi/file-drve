@@ -573,10 +573,22 @@ def share_folder_view(request, slug):
         
     paginator = Paginator(items, 20) 
     page_obj = paginator.get_page(1)
+    
+    contacts = ContactDetails.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )[:1500]
 
-    return render(request, 'drive/share-folder.html', {
+    contact_groups = ContactGroup.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )
+
+    return render(request, 'drive/folder/share-folder.html', {
         'folder': folder,
-        'items': page_obj
+        'items': page_obj,
+        'contacts': contacts,
+        'contact_groups': contact_groups
     })
 
 @require_http_methods(['GET'])
@@ -1229,6 +1241,13 @@ def add_contact_to_shared_item_view(request, contact_id):
     recipient = User.objects.filter(email=contact.email).first()
 
     if file:
+        
+        # no more than 100 shares
+        
+        if len(file.active_shares.all()) > 99:
+            messages.warning(request, 'Partage limité à 100 personnes')
+            return redirect('share-file', file.slug)
+        
         existing_record = ShareRecord.objects.filter(
             is_deleted=False,
             contact=contact,
@@ -1253,6 +1272,11 @@ def add_contact_to_shared_item_view(request, contact_id):
         return redirect('share-file', file.slug)
     
     elif folder:
+        
+        if len(folder.active_shares.all()) > 99:
+            messages.warning(request, 'Partage limité à 100 personnes')
+            return redirect('share-file', file.slug)
+        
         existing_record = ShareRecord.objects.filter(
             is_deleted=False,
             contact=contact,
@@ -1549,6 +1573,10 @@ def add_contact_group_to_item_view(request):
     
     if file:
         
+        if len(file.active_shares.all()) + contacts.count() > 99:
+            messages.warning(request, 'Partage limité à 100 personnes')
+            return redirect('share-file', file.slug)
+        
         for contact in contacts:
             share, created = ShareRecord.objects.get_or_create(
                 contact=contact,
@@ -1566,6 +1594,10 @@ def add_contact_group_to_item_view(request):
         return redirect('share-file', file.slug)
     
     elif folder:
+        
+        if len(folder.active_shares.all()) + contacts.count() > 99:
+            messages.warning(request, 'Partage limité à 100 personnes')
+            return redirect('share-file', file.slug)
         
         for contact in contacts:
             share, created = ShareRecord.objects.get_or_create(

@@ -251,8 +251,55 @@
             </tbody>
         </table>
 
+        {% if file.active_shares|length > 1 %}
+        <table class="min-w-full border-b border-gray-300 mt-4">
+            <thead class="bg-[#ffd500] hover:bg-[#F5CC00]">
+                <tr>
+                    <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
+                        <a href="{% url 'share-file' file.slug %}">
+                            <span>Personnes ayant accès</span>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white">
+                {% for share in file.active_shares|slice:":10" %}
+                <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1">
+                        <div class="flex flex-col min-w-0">
+                            <p class="font-semibold text-gray-600 truncate">{{ share.contact.full_name }}</p>
+                            <p class="text-sm text-gray-400 truncate">{{ share.contact.email }}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if file.active_shares.count > 11 %}
+                <tr>
+                    <td class="px-2 py-1 text-gray-500 italic">
+                        <a href="{% url 'share-file' file.slug %}">
+                            <span class="text-[#027991] hover:text-[#016073]">
+                                + {{ file.active_shares.count|add:"-10" }} autres personnes
+                            </span>
+                        </a>
+                    </td>
+                </tr>
+                 {% elif file.active_shares.count == 11 %}
+                <tr>
+                    <td class="px-2 py-1 text-gray-500 italic">
+                        <a href="{% url 'share-file' file.slug %}">
+                            <span class="text-[#027991] hover:text-[#016073]">
+                                + une autre personne
+                            </span>
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        {% endif %}
+
     </div>
 </div>
-
 
 {% endblock %}
