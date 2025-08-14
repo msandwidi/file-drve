@@ -84,7 +84,7 @@
                 {% csrf_token %}
                 <input type="text" name="search_term" placeholder="Entrer le nom ou adresse e-mail"
                     class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 text-sm outline-none" required
-                    maxlength="1500" />
+                    maxlength="30" value="{{search_term|default:''}}" />
                 <button type="submit"
                     class="bg-[#027991] hover:bg-[#016073] text-white text-sm px-4 py-2 font-semibold">
                     Chercher
@@ -101,9 +101,6 @@
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Contact
                         </th>
-                        <th class="w-[32%] text-left text-md text-gray-600 font-semibold">
-                            Actions
-                        </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
@@ -111,13 +108,12 @@
                     {% for contact in contacts %}
                     <tr class="shadow shadow-sm group hover:bg-gray-50 hover:text-[#027991]">
                         <td class="px-4 py-2 text-md">
-                            <a href="#"
-                                class="text-[#027991] hover:text-[#016073] font-semibold shrink-0">{{contact.full_name}}</a>
+                            <a href="#" class="text-[#027991] hover:text-[#016073] font-semibold shrink-0"
+                                onclick="openEditContactDialog(this)" data-first-name="{{contact.first_name}}"
+                                data-last-name="{{contact.last_name}}" data-email="{{contact.email}}"
+                                data-groups="{{contact.groups.all|join:','}}" data-id="{{contact.id}}">
+                                {{contact.full_name}}</a>
                             <p class="text-sm text-gray-500">{{contact.email}}</p>
-                        </td>
-
-                        <td class="px-4 py-2 text-sm flex items-center space-x-3">
-
                         </td>
                     </tr>
                     {% endfor %}
@@ -148,6 +144,117 @@
                 </div>
             </div>
             {% endif %}
+
+            <dialog id="editContactDialog"
+                class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
+                <form method="post" action="{% url 'edit-contact' 0 %}">
+                    {% csrf_token %}
+
+                    <div class="space-y-2">
+                        <h5>Ajouter un contact</h5>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-gray-600 text-sm font-semibold mb-2" for="last_name">
+                                    Nom
+                                </label>
+                                <input type="text" id="editContactFNameInput" name="last_name"
+                                    class="w-full border border-gray-300 px-3 py-2" required placeholder="Nom"
+                                    maxlength="80">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-600 text-sm font-semibold mb-2" for="first_name">
+                                    Prénom
+                                </label>
+
+                                <input type="text" name="first_name" class="w-full border border-gray-300 px-3 py-2"
+                                    id="editContactLNameInput" required placeholder="Prénom" maxlength="80">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-600 text-sm font-semibold mb-2" for="email">
+                                E-mail
+                            </label>
+                            <input type="email" id="editContactEmailInput" name="email"
+                                class="w-full border border-gray-300 px-3 py-2" placeholder="Adresse e-mail" required>
+                        </div>
+
+                        {% if contact_groups %}
+                        <div class="mt-2">
+                            <label class="block text-gray-600 text-sm font-semibold mb-2" for="groups">
+                                Groupes
+                            </label>
+                            <select name="groups" multiple id="editContactGroupsInput"
+                                class="bg-white appearance-none border border-gray-200 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none">
+                                {% for grp in contact_groups %}
+                                <option value="{{grp.id}}" {% if grp.id == group.id %}selected{% endif %}>{{grp.name}}
+                                </option>
+                                {% endfor %}
+                                <option value="">### Aucun ###</option>
+                            </select>
+                        </div>
+
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" id="closeEditContactBtn"
+                            class="border-4 border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-semibold py-1.5 px-4">Annuler</button>
+
+                        <button type="submit"
+                            class="bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4 border border-black">Sauvegarder</button>
+                    </div>
+
+                </form>
+
+                <form action="{% url 'delete-contact' 0 %}" method="post" class="mt-4"
+                    data-action-template="{% url 'delete-contact' 0 %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-red-500 text-sm">Supprimer ce Contact</button>
+                </form>
+            </dialog>
+
+            <script>
+                function openEditContactDialog(el) {
+                    const dialog = document.getElementById('editContactDialog');
+
+                    // Populate fields
+                    document.getElementById('editContactFNameInput').value = el.dataset.lastName || '';
+                    document.getElementById('editContactLNameInput').value = el.dataset.firstName || '';
+                    document.getElementById('editContactEmailInput').value = el.dataset.email || '';
+
+                    // Select groups if provided
+                    if (el.dataset.groups) {
+
+                        const selectedGroups = el.dataset.groups.split(',');
+
+                        const selectEl = document.getElementById('editContactGroupsInput');
+                        if (selectEl) {
+                            Array.from(selectEl.options).forEach(opt => {
+                                opt.selected = selectedGroups.includes(opt.text);
+                            });
+                        }
+                    }
+
+                    // You can also dynamically change form action if needed
+
+                    const forms = dialog.querySelectorAll('form');
+                    forms.forEach(form => {
+                        if (form.dataset.actionTemplate) {
+                            form.action = form.dataset.actionTemplate.replace('/0/', `/${el.dataset.id}/`);
+                        }
+                    });
+
+                    dialog.showModal();
+                }
+
+                // Close button handler
+                document.getElementById('closeEditContactBtn').addEventListener('click', () => {
+                    document.getElementById('editContactDialog').close();
+                });
+            </script>
         </div>
 
         <div id="right-pane">
@@ -322,8 +429,6 @@
                                 class="mt-4 bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4 border border-black">Sauvegarder</button>
                         </form>
                     </dialog>
-
-
             </div>
         </div>
     </div>
