@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.utils import timezone
+from django.db.models import Q
 from django.db import models
 import uuid
 import os
@@ -85,7 +86,21 @@ class FileRecord(models.Model):
     
     is_favorite = models.BooleanField(default=False)
 
-    is_shared = models.BooleanField(default=False)
+    @property
+    def is_shared(self):
+        # Check if the file itself is explicitly shared and not expired
+        if self.shared_at and (not self.share_expires_at or self.share_expires_at > timezone.now()):
+            return True
+
+        # Check parent folders
+        folder = self.folder
+        while folder:
+            if folder.shared_at and (not folder.share_expires_at or folder.share_expires_at > timezone.now()):
+                return True
+            folder = folder.parent
+
+        return False
+
     shared_at = models.DateTimeField(null=True, blank=True)
     share_expires_at = models.DateTimeField(null=True, blank=True)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
@@ -103,7 +118,7 @@ class FileRecord(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
     
     folder = models.ForeignKey(
-        'drive.FolderRecord', 
+        'FolderRecord', 
         on_delete=models.SET_NULL, 
         related_name='files',
         null=True,
@@ -172,10 +187,84 @@ class FileRecord(models.Model):
     def name_without_ext(self):
         return os.path.splitext(self.name)[0]
     
-    def active_shares(self):
+    def active_direct_shares(self):
         shares = self.shares.all()
         return shares.filter(is_deleted = False)
+    
+    def get_all_parent_folders(self):
+        parents = []
+        folder = self.folder
+        
+        while folder is not None and not folder.is_deleted:
+            parents.append(folder)
+            folder = folder.parent
+        return parents
+    
+    def get_all_shared_parents(self):
+        parents = []
+        folder = self.folder
+        
+        while folder is not None and not folder.is_deleted:
+            if folder.is_shared:
+                parents.append(folder)
+            folder = folder.parent
+        return parents
+    
+    def is_accessible_by_user(self, user):
+        """
+        Check if the file is directly shared with the user
+        or if any of its parent folders is shared with the user.
+        """
+        # 1. Check if file is directly shared with the user
+        if self.shares.filter(is_deleted=False, contact__user=user).exists():
+            return True
 
+        # 2. Check if any parent folder is shared with the user
+        folder = self.folder
+        while folder is not None and not folder.is_deleted:
+            if folder.shares.filter(is_deleted=False, contact__user=user).exists():
+                return True
+            folder = folder.parent
+        
+        return False
+
+    def get_users_with_access(self):
+        parents = self.get_all_parent_folders()
+        
+        User = get_user_model()
+
+        return User.objects.filter(
+            Q(contacts__shared_items__file=self) |
+            Q(shared_items__file=self) |
+            Q(contacts__shared_items__folder__in=parents) |
+            Q(shared_items__folder__in=parents),
+            contacts__shared_items__is_deleted=False
+        ).distinct()
+
+    def get_contacts_with_access(self):
+        # Get all parent folders of the file
+        parents = self.get_all_parent_folders()
+
+        return ContactDetails.objects.filter(
+            Q(shared_items__file=self) |                 # Directly shared with the file
+            Q(shared_items__folder__in=parents),        # Shared via any parent folder
+            shared_items__is_deleted=False              # Only non-deleted shares
+        ).distinct()
+        
+    def get_share_records_with_access(self):
+        """
+        Return all ShareRecord instances that give access to this file,
+        including shares on the file itself and shares on any parent folder.
+        """
+        # Get all parent folders
+        parents = self.get_all_parent_folders()
+
+        return ShareRecord.objects.filter(
+            Q(file=self) |
+            Q(folder__in=parents),
+            is_deleted=False
+        ).select_related('contact', 'recipient').distinct()
+        
     class Meta:
         ordering = ['-created_at']
         
@@ -215,7 +304,21 @@ class FolderRecord(models.Model):
 
     is_favorite = models.BooleanField(default=False)
 
-    is_shared = models.BooleanField(default=False)
+    @property
+    def is_shared(self):
+        # Check if the file itself is explicitly shared and not expired
+        if self.shared_at and (not self.share_expires_at or self.share_expires_at > timezone.now()):
+            return True
+
+        # Check parent folders
+        folder = self.parent
+        while folder:
+            if folder.shared_at and (not folder.share_expires_at or folder.share_expires_at > timezone.now()):
+                return True
+            folder = folder.parent
+
+        return False
+    
     shared_at = models.DateTimeField(null=True, blank=True)
     share_expires_at = models.DateTimeField(null=True, blank=True)
     shared_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
@@ -246,10 +349,84 @@ class FolderRecord(models.Model):
     def __str__(self):
         return self.name
     
-    def active_shares(self):
+    def active_direct_shares(self):
         shares = self.shares.all()
         return shares.filter(is_deleted = False)
     
+    def get_all_parent_folders(self):
+        parents = []
+        folder = self.parent
+        
+        while folder is not None and not folder.is_deleted:
+            parents.append(folder)
+            folder = folder.parent
+        return parents
+    
+    def get_all_shared_parents(self):
+        parents = []
+        folder = self.parent
+        
+        while folder is not None and not folder.is_deleted:
+            if folder.is_shared:
+                parents.append(folder)
+            folder = folder.parent
+        return parents
+    
+    def is_accessible_by_user(self, user):
+        """
+        Check if the file is directly shared with the user
+        or if any of its parent folders is shared with the user.
+        """
+        # 1. Check if file is directly shared with the user
+        if self.shares.filter(is_deleted=False, contact__user=user).exists():
+            return True
+
+        # 2. Check if any parent folder is shared with the user
+        folder = self.parent
+        while folder is not None and not folder.is_deleted:
+            if folder.shares.filter(is_deleted=False, contact__user=user).exists():
+                return True
+            folder = folder.parent
+        
+        return False
+
+    def get_users_with_access(self):
+        parents = self.get_all_parent_folders()
+        
+        User = get_user_model()
+
+        return User.objects.filter(
+            Q(contacts__shared_items__folder=self) |
+            Q(shared_items__folder=self) |
+            Q(contacts__shared_items__folder__in=parents) |
+            Q(shared_items__folder__in=parents),
+            contacts__shared_items__is_deleted=False
+        ).distinct()
+        
+    def get_contacts_with_access(self):
+        # Get all parent folders of the file
+        parents = self.get_all_parent_folders()
+
+        return ContactDetails.objects.filter(
+            Q(shared_items__folder=self) |                 # Directly shared with the file
+            Q(shared_items__folder__in=parents),        # Shared via any parent folder
+            shared_items__is_deleted=False              # Only non-deleted shares
+        ).distinct()
+    
+    def get_share_records_with_access(self):
+        """
+        Return all ShareRecord instances that give access to this file,
+        including shares on the file itself and shares on any parent folder.
+        """
+        # Get all parent folders
+        parents = self.get_all_parent_folders()
+
+        return ShareRecord.objects.filter(
+            Q(folder=self) |
+            Q(folder__in=parents),
+            is_deleted=False
+        ).select_related('contact', 'recipient').distinct()
+
     @property
     def display_size(self):
         """
@@ -381,7 +558,7 @@ class ShareRecord(models.Model):
     
     recipient = models.ForeignKey(
         get_user_model(), 
-        on_delete=models.CASCADE, 
+        on_delete=models.SET_NULL, 
         related_name='shared_items',
         blank=True,
         null=True
@@ -415,11 +592,11 @@ class ShareRecord(models.Model):
         
     def save(self, *args, **kwargs):
         
-        # default to file
-        slug_candidate = generate_slug(self.file)
-        
         if self.folder:
             slug_candidate = generate_slug(self.folder, is_folder=True)
+            
+        else:
+            slug_candidate = generate_slug(self.file)
         
         if not self.pk:
             # New record → always generate slug

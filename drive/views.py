@@ -50,7 +50,6 @@ def delete_folder_and_contents(folder):
             if not file.is_deleted:
                 file.is_deleted = True
                 file.deleted_at = timezone.now()
-                file.is_shared = False
                 file.shared_at = None
                 file.save()
 
@@ -61,7 +60,6 @@ def delete_folder_and_contents(folder):
         # soft delete the folder
         folder.is_deleted = True
         folder.deleted_at = timezone.now()
-        folder.is_shared = False
         folder.shared_at = None
         folder.save()
 
@@ -518,7 +516,6 @@ def delete_file_view(request, slug):
     file.is_deleted = True
     file.deleted_at = timezone.now()
     file.shared_at = None
-    file.is_shared = False
     file.save()
     
     messages.success(request, 'Fichier supprimé')
@@ -557,14 +554,12 @@ def share_folder_view(request, slug):
     
     if request.method == 'POST':
 
-        if hasattr(folder, "is_shared"):
-            folder.is_shared = True
-            folder.shared_at = timezone.now()
-            folder.save(update_fields=["is_shared", 'shared_at'])
-    
-            messages.success(request, 'Dossier partagé')
+        folder.shared_at = timezone.now()
+        folder.save(update_fields=['shared_at'])
 
-            return redirect('share-folder', slug=slug)
+        messages.success(request, 'Dossier partagé')
+
+        return redirect('share-folder', slug=slug)
         
     folders = folder.subfolders.all()
     files = folder.files.all()
@@ -665,15 +660,12 @@ def share_file_view(request, slug):
     
     if request.method == 'POST':
 
-        if hasattr(file, "is_shared"):
+        file.shared_at = timezone.now()
+        file.save(update_fields=['shared_at'])
 
-            file.is_shared = True
-            file.shared_at = timezone.now()
-            file.save(update_fields=["is_shared", 'shared_at'])
-    
-            messages.success(request, 'Fichier partagé')
+        messages.success(request, 'Fichier partagé')
 
-            return redirect('share-file', slug=slug)
+        return redirect('share-file', slug=slug)
         
     contacts = ContactDetails.objects.filter(
         is_deleted=False,
@@ -1058,11 +1050,6 @@ def create_contact_view(request):
             contact=contact
         )
 
-        if not file.is_shared:
-            file.is_shared = True
-            file.shared_at = timezone.now()
-            file.save()
-
         return redirect('share-file', file.slug)
     
     elif folder:
@@ -1074,7 +1061,6 @@ def create_contact_view(request):
         )
 
         if not folder.is_shared:
-            folder.is_shared = True
             folder.shared_at = timezone.now()
             folder.save()
 
@@ -1233,7 +1219,7 @@ def add_contact_to_shared_item_view(request, contact_id):
 
     elif folder_slug:
         folder = FolderRecord.objects.filter(
-            slug=file_slug,
+            slug=folder_slug,
             is_deleted=False,
             user=request.user
         ).first()
@@ -1244,7 +1230,7 @@ def add_contact_to_shared_item_view(request, contact_id):
         
         # no more than 100 shares
         
-        if len(file.active_shares.all()) > 99:
+        if len(file.get_share_records_with_access()) > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
@@ -1261,9 +1247,8 @@ def add_contact_to_shared_item_view(request, contact_id):
                 recipient=recipient,
                 contact=contact
             )
-
+            
             if not file.is_shared:
-                file.is_shared = True
                 file.shared_at = timezone.now()
                 file.save()
 
@@ -1273,7 +1258,7 @@ def add_contact_to_shared_item_view(request, contact_id):
     
     elif folder:
         
-        if len(folder.active_shares.all()) > 99:
+        if len(folder.get_share_records_with_access()) > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
@@ -1290,87 +1275,49 @@ def add_contact_to_shared_item_view(request, contact_id):
                 recipient=recipient,
                 contact=contact
             )
-
+            
             if not folder.is_shared:
-                folder.is_shared = True
                 folder.shared_at = timezone.now()
                 folder.save()
-            
+
             messages.success(request, 'Contact ajouté')
 
         return redirect('share-folder', folder.slug)
     
     else:
+        messages.warning(request, 'Fichier ou dossier introuvable')
         return redirect('my-box')
     
  
 @require_http_methods(['GET'])
 @login_required
-def remove_contact_from_shared_item_view(request, contact_id):
+def remove_contact_from_shared_item_view(request, share_id):
     """
     Remove contact from file or folder
     """
     
-    contact = ContactDetails.objects.filter(
-        id=contact_id,
+    share = ShareRecord.objects.filter(
+        id=share_id,
         is_deleted=False,
-        user=request.user
+        contact__is_deleted=False,
+        contact__user=request.user,
     ).first()
     
-    if not contact:
-        messages.warning(request, 'Contact introuvable')
+    if not share:
+        messages.warning(request, 'Partage introuvable')
         return redirect('my-box')
     
-    file_slug = request.GET.get('file')
-    folder_slug = request.GET.get('folder')
-
-    file = None
-    folder = None
-
-    if file_slug:        
-        file = FileRecord.objects.filter(
-            slug=file_slug,
-            is_deleted=False,
-            user=request.user
-        ).first()
-
-    elif folder_slug:
-        folder = FolderRecord.objects.filter(
-            slug=file_slug,
-            is_deleted=False,
-            user=request.user
-        ).first()
-        
-    if file:
-        ShareRecord.objects.filter(
-            is_deleted=False,
-            contact=contact,
-            file=file
-        ).update(
-            is_deleted=True,
-            deleted_at=timezone.now()
-        )
-        
-        messages.success(request, 'Contact enlevé')
-        
-        return redirect('share-file', file.slug)
+    share.is_deleted = True
+    share.deleted_at = timezone.now()
+    share.save()
     
-    elif folder:
-        ShareRecord.objects.filter(
-            is_deleted=False,
-            contact=contact,
-            folder=folder
-        ).update(
-            is_deleted=True,
-            deleted_at=timezone.now()
-        )
-
+    if share.file:        
         messages.success(request, 'Contact enlevé')
-        
-        return redirect('share-folder', folder.slug)
+        return redirect('share-file', share.file.slug)
     
     else:
-        return redirect('my-box')
+        messages.success(request, 'Contact enlevé')
+        return redirect('share-folder', share.folder.slug)
     
 @require_http_methods(['GET', 'POST'])
 @login_required
@@ -1573,7 +1520,7 @@ def add_contact_group_to_item_view(request):
     
     if file:
         
-        if len(file.active_shares.all()) + contacts.count() > 99:
+        if len(file.get_share_records_with_access()) + contacts.count() > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
@@ -1595,7 +1542,7 @@ def add_contact_group_to_item_view(request):
     
     elif folder:
         
-        if len(folder.active_shares.all()) + contacts.count() > 99:
+        if len(folder.get_share_records_with_access()) + contacts.count() > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
