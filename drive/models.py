@@ -558,7 +558,7 @@ class ShareRecord(models.Model):
     
     recipient = models.ForeignKey(
         get_user_model(), 
-        on_delete=models.SET_NULL, 
+        on_delete=models.CASCADE, 
         related_name='shared_items',
         blank=True,
         null=True
@@ -595,8 +595,8 @@ class ShareRecord(models.Model):
         if self.folder:
             slug_candidate = generate_slug(self.folder, is_folder=True)
             
-        else:
-            slug_candidate = generate_slug(self.file)
+        elif self.file:
+            slug_candidate = generate_slug(self.file, is_folder=True)
         
         if not self.pk:
             # New record → always generate slug

@@ -169,15 +169,17 @@ def my_drive_view(request):
             files = FileRecord.objects.filter(
                 user=request.user,
                 is_deleted=False,
-                is_shared=True,
             )
+            
+            files = [file for file in files if file.is_shared]
 
             # shared folders
             folders = FolderRecord.objects.filter(
                 is_deleted=False,
                 user=request.user,
-                is_shared=True,
             )
+            
+            folders = [folder for folder in folders if folder.is_shared]
             
         elif folder_slug == 'partages-avec-moi':
             # files shared with me
@@ -187,22 +189,20 @@ def my_drive_view(request):
                 recipient=request.user,
                 file__isnull=False,             
                 file__is_deleted=False,    
-                file__is_shared=True,    
                 is_deleted=False,
                 expires_at__gt=timezone.now()
             ).exclude(file__user=request.user)
-
+            
             shared_folder = ShareRecord.objects.filter(
                 recipient=request.user,
                 folder__isnull=False,
                 folder__is_deleted=False,    
-                folder__is_shared=True,    
                 is_deleted=False,
                 expires_at__gt=timezone.now()
             ).exclude(file__user=request.user)
 
-            files = [share.file for share in shared_files]
-            folders = [share.folder for share in shared_folder]
+            files = [share.file for share in shared_files if share.file.is_shared]
+            folders = [share.folder for share in shared_folder if share.folder.is_shared]
 
         elif folder_slug:
             logger.info('Finding folder by slog...')
@@ -1228,59 +1228,63 @@ def add_contact_to_shared_item_view(request, contact_id):
 
     if file:
         
-        # no more than 100 shares
+        all_access = file.get_share_records_with_access()
+        
+        existing_record = all_access.filter(
+            contact=contact,
+        )
+        
+        if existing_record:
+            messages.success(request, 'Contact déjà ajouté')
+            return redirect('share-file', file.slug)
         
         if len(file.get_share_records_with_access()) > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
-        existing_record = ShareRecord.objects.filter(
-            is_deleted=False,
-            contact=contact,
-            file=file
-        ).first()
+        ShareRecord.objects.create(
+            file=file,
+            expires_at=file.share_expires_at,
+            recipient=recipient,
+            contact=contact
+        )
         
-        if not existing_record:
-            ShareRecord.objects.create(
-                file=file,
-                expires_at=file.share_expires_at,
-                recipient=recipient,
-                contact=contact
-            )
-            
-            if not file.is_shared:
-                file.shared_at = timezone.now()
-                file.save()
+        if not file.is_shared:
+            file.shared_at = timezone.now()
+            file.save()
 
-            messages.success(request, 'Contact ajouté')
+        messages.success(request, 'Contact ajouté')
             
         return redirect('share-file', file.slug)
     
     elif folder:
         
+        all_access = folder.get_share_records_with_access()
+        
+        existing_record = all_access.filter(
+            contact=contact,
+        )
+        
+        if existing_record:
+            messages.success(request, 'Contact déjà ajouté')
+            return redirect('share-folder', folder.slug)
+        
         if len(folder.get_share_records_with_access()) > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
-            return redirect('share-file', file.slug)
+            return redirect('share-folder', folder.slug)
         
-        existing_record = ShareRecord.objects.filter(
-            is_deleted=False,
-            contact=contact,
-            folder=folder
-        ).first()
+        ShareRecord.objects.create(
+            folder=folder,
+            expires_at=folder.share_expires_at,
+            recipient=recipient,
+            contact=contact
+        )
         
-        if not existing_record:
-            ShareRecord.objects.create(
-                folder=folder,
-                expires_at=folder.share_expires_at,
-                recipient=recipient,
-                contact=contact
-            )
-            
-            if not folder.is_shared:
-                folder.shared_at = timezone.now()
-                folder.save()
+        if not folder.is_shared:
+            folder.shared_at = timezone.now()
+            folder.save()
 
-            messages.success(request, 'Contact ajouté')
+        messages.success(request, 'Contact ajouté')
 
         return redirect('share-folder', folder.slug)
     
@@ -1311,11 +1315,42 @@ def remove_contact_from_shared_item_view(request, share_id):
     share.deleted_at = timezone.now()
     share.save()
     
-    if share.file:        
+    if share.file:
+        all_access = share.file.get_share_records_with_access()
+        
+        other_user_access = all_access.filter(
+            contact=share.contact,
+        )
+        
+        if other_user_access:
+            logger.info(f'{len(other_user_access)} other access of the same contact found')
+            logger.info('removing other shares...')
+            
+            for record in other_user_access:
+                record.is_deleted = True
+                record.deleted_at = timezone.now()
+                record.save()
+            
         messages.success(request, 'Contact enlevé')
         return redirect('share-file', share.file.slug)
     
     else:
+        
+        all_access = share.folder.get_share_records_with_access()
+        
+        other_user_access = all_access.filter(
+            contact=share.contact,
+        )
+        
+        if other_user_access:
+            logger.info(f'{len(other_user_access)} other access of the same contact found')
+            logger.info('removing other shares...')
+            
+            for record in other_user_access:
+                record.is_deleted = True
+                record.deleted_at = timezone.now()
+                record.save()
+        
         messages.success(request, 'Contact enlevé')
         return redirect('share-folder', share.folder.slug)
     
