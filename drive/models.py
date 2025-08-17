@@ -709,3 +709,44 @@ class ContactGroup(models.Model):
     
     def __str__(self):
         return self.name
+
+class UserNotification(models.Model):
+    title = models.CharField(max_length=80)
+    description = models.CharField(max_length=255)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(blank=True, null=True)
+
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    user = models.ForeignKey(
+        get_user_model(), 
+        on_delete=models.CASCADE, 
+        related_name='notifications'
+    )
+    
+    file = models.ForeignKey(
+        'FileRecord', 
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE, 
+        related_name='notifications'
+    )
+
+    folder = models.ForeignKey(
+        'FolderRecord',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    
+    def __str__(self):
+        return self.title
+    
+    
+    class Meta:
+        ordering = ['-created_at']

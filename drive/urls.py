@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path('', views.my_drive_view, name='my-box'),
+    
+    # folder
     path('corbeille', views.trash_bin_view, name='my-trash'),
     path('corbeille/<slug:slug>/restore', views.restore_deleted_file_view, name='restore-deleted-file'),
     path('corbeille/<slug:slug>/archive', views.archive_file_view, name='archive-deleted-file'),
@@ -11,6 +13,8 @@ urlpatterns = [
     path('dossier/<slug:slug>/partager', views.share_folder_view, name='share-folder'),
     path('dossier/<slug:slug>/download', views.download_folder_view, name='download-folder'),
     path('dossier/<slug:slug>/rename', views.rename_folder_view, name='rename-folder'),
+    
+    # file
     path('fichier/<slug:slug>/partager', views.share_file_view, name='share-file'),
     path('fichier/<slug:slug>/rename/submit', views.rename_file_info_view, name='rename-file-info'),
     path('fichier/<slug:slug>/details', views.file_details_view, name='file-details'),
@@ -19,6 +23,8 @@ urlpatterns = [
     path('fichier/<slug:slug>/download', views.download_file_view, name='download-file'),
     path('fichier/importer', views.upload_files_view, name='upload-files'),
     path('favoris/<slug:slug>', views.toggle_favorite_view, name='toggle-favorite'),
+    
+    # contacts
     path('contacts', views.all_contacts_view, name='my-contacts'),
     path('contacts/new', views.create_contact_view, name='create-new-contact'),
     path('contacts/<int:contact_id>/edit', views.edit_contact_view, name='edit-contact'),
@@ -30,4 +36,8 @@ urlpatterns = [
     path('contacts/groups/add-to-item', views.add_contact_group_to_item_view, name='add-contact-group-to-shared-item'),
     path('contacts/<int:contact_id>/add-to-item', views.add_contact_to_shared_item_view, name='add-contact-to-item'),
     path('contacts/<int:share_id>/remove-from-item', views.remove_contact_from_shared_item_view, name='remove-contact-from-item'),
+
+    # notifications
+    path('notifications', views.all_notifications_view, name='my-notifications'),
+    
 ]

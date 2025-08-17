@@ -1,4 +1,11 @@
-from .models import FileRecord, FolderRecord, ShareRecord, ContactDetails, ContactGroup
+from .models import (
+    FileRecord, 
+    FolderRecord,
+    ShareRecord, 
+    ContactDetails, 
+    ContactGroup,
+    UserNotification
+)
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -1430,7 +1437,6 @@ def all_contacts_view(request):
         'search_term': search_term
     })
 
-
 @require_http_methods(['POST'])
 @login_required
 def create_contact_group_view(request):
@@ -1601,3 +1607,51 @@ def add_contact_group_to_item_view(request):
     messages.success(request, 'Groupe supprimé')
 
     return redirect('my-contacts')
+
+@require_http_methods(['GET'])
+@login_required
+def all_notifications_view(request):
+    
+    page_size = request.GET.get('page_size', '50')
+    if is_valid_int(page_size):
+        page_size = int(page_size)
+    else:
+        page_size = 50
+    
+    page = request.GET.get('page', '1')
+    if is_valid_int(page):
+        page = int(page) 
+    else:
+        page = 1
+
+    if page_size > 50:
+        page_size = 50
+        
+    notif_id = request.GET.get('notification')
+    
+    notification = None
+    
+    if notif_id:
+        notification = UserNotification.objects.filter(
+            id=notif_id,
+            is_deleted=False,
+            user=request.user
+        ).first()
+        
+        # save read timestamp
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save()
+        
+    notifications = UserNotification.objects.filter(
+        is_deleted=False,
+        user=request.user
+    )
+    
+    paginator = Paginator(notifications, page_size) 
+    page_obj = paginator.get_page(page)
+    
+    return render(request, 'notifications/notifications.html', {
+        'notifications': page_obj,
+        'notification': notification
+    })

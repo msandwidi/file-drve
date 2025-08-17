@@ -31,6 +31,7 @@
           <!-- Dropdown -->
           <div class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md
             opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-150 z-10">
+            <a href="{% url 'my-notifications' %}" class="block px-4 py-2 text-sm hover:bg-gray-100">Mes Notifications</a>
             <a href="{% url 'my-profile' %}" class="block px-4 py-2 text-sm hover:bg-gray-100">Mon Profil</a>
             <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Déconnecter</a>
           </div>
@@ -53,6 +54,7 @@
   <div id="mobile-menu" class="hidden sm:hidden px-4 pb-4">
 
     {% if user.is_authenticated %}
+    <a href="{% url 'my-notifications' %}" class="block text-gray-900 py-2 hover:text-blue-600">Mes Notifications</a>
     <a href="{% url 'my-profile' %}" class="block text-gray-900 py-2 hover:text-blue-600">Mon Profil</a>
     <a href="{% url 'logout' %}" class="block text-red-500 py-2 hover:text-blue-600">Deconnecter</a>
     {% endif %}
