@@ -1228,7 +1228,7 @@ def add_contact_to_shared_item_view(request, contact_id):
 
     if file:
         
-        all_access = file.get_share_records_with_access()
+        all_access = file.get_unique_share_records_with_access()
         
         existing_record = all_access.filter(
             contact=contact,
@@ -1238,7 +1238,7 @@ def add_contact_to_shared_item_view(request, contact_id):
             messages.success(request, 'Contact déjà ajouté')
             return redirect('share-file', file.slug)
         
-        if len(file.get_share_records_with_access()) > 99:
+        if len(file.get_unique_share_records_with_access()) > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
@@ -1259,7 +1259,7 @@ def add_contact_to_shared_item_view(request, contact_id):
     
     elif folder:
         
-        all_access = folder.get_share_records_with_access()
+        all_access = folder.get_unique_share_records_with_access()
         
         existing_record = all_access.filter(
             contact=contact,
@@ -1269,7 +1269,7 @@ def add_contact_to_shared_item_view(request, contact_id):
             messages.success(request, 'Contact déjà ajouté')
             return redirect('share-folder', folder.slug)
         
-        if len(folder.get_share_records_with_access()) > 99:
+        if len(folder.get_unique_share_records_with_access()) > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-folder', folder.slug)
         

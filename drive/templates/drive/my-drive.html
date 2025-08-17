@@ -290,10 +290,10 @@
                                             d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
                                     </svg>
 
-                                    {% if folder.get_share_records_with_access|length > 1 %}
-                                    <span>{{folder.get_share_records_with_access|length}} personnes</span>
+                                    {% if folder.get_unique_share_records_with_access|length > 1 %}
+                                    <span>{{folder.get_unique_share_records_with_access|length}} personnes</span>
                                     {% else %}
-                                    <span>{{folder.get_share_records_with_access|length}} personne</span>
+                                    <span>{{folder.get_unique_share_records_with_access|length}} personne</span>
                                     {% endif %}
                                 </div>
                             </td>
@@ -546,7 +546,7 @@
             </div>
 
             
-            {% if folder.get_share_records_with_access|length > 1 %}
+            {% if folder.get_unique_share_records_with_access|length > 1 %}
             <table class="min-w-full border-b border-gray-300 mt-4">
                 <thead class="bg-[#ffd500] hover:bg-[#F5CC00]">
                     <tr>
@@ -558,7 +558,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white">
-                    {% for share in folder.get_share_records_with_access|slice:":10" %}
+                    {% for share in folder.get_unique_share_records_with_access|slice:":10" %}
                     <tr class="shadow shadow-sm group">
                         <td class="px-2 py-1">
                             <div class="flex flex-col min-w-0">
@@ -569,17 +569,17 @@
                     </tr>
                     {% endfor %}
 
-                    {% if folder.get_share_records_with_access.count > 11 %}
+                    {% if folder.get_unique_share_records_with_access.count > 11 %}
                     <tr>
                         <td class="px-2 py-1 text-gray-500 italic">
                             <a href="{% url 'share-folder' folder.slug %}">
                                 <span class="text-[#027991] hover:text-[#016073]">
-                                    + {{ folder.get_share_records_with_access.count|add:"-10" }} autres personnes
+                                    + {{ folder.get_unique_share_records_with_access.count|add:"-10" }} autres personnes
                                 </span>
                             </a>
                         </td>
                     </tr>
-                    {% elif folder.get_share_records_with_access.count == 11 %}
+                    {% elif folder.get_unique_share_records_with_access.count == 11 %}
                     <tr>
                         <td class="px-2 py-1 text-gray-500 italic">
                             <a href="{% url 'share-folder' folder.slug %}">

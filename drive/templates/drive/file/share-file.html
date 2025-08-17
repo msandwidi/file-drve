@@ -34,7 +34,7 @@
 <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-2 mt-4">
     <div class="space-y-4">
         <div class="max-h-96 overflow-y-auto">
-            {% if not file.get_share_records_with_access %}
+            {% if not file.get_unique_share_records_with_access %}
             <div class="flex items-start p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg space-x-3"
                 role="alert">
                 <span class="text-sm">Ce dossier n’a encore été partagé avec personne</span>
@@ -44,17 +44,17 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-2 py-1 text-left text-lg font-semibold border-l-2 border-gray-200">
-                            {% if file.get_share_records_with_access|length > 1%}
-                            <span>Partagé avec {{file.get_share_records_with_access|length}} personnes</span>
+                            {% if file.get_unique_share_records_with_access|length > 1%}
+                            <span>Partagé avec {{file.get_unique_share_records_with_access|length}} personnes</span>
                             {% else %}
-                            <span>Partagé avec {{file.get_share_records_with_access|length}} personne</span>
+                            <span>Partagé avec {{file.get_unique_share_records_with_access|length}} personne</span>
                             {% endif %}
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white" id="active-shares-tbody">
 
-                    {% for share in file.get_share_records_with_access %}
+                    {% for share in file.get_unique_share_records_with_access %}
                     <tr class="shadow shadow-sm group">
                         <td class="px-2 py-1 text-sm text-gray-600">
                             <div class="flex items-center space-x-2 justify-between">

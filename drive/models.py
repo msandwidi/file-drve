@@ -265,6 +265,23 @@ class FileRecord(models.Model):
             is_deleted=False
         ).select_related('contact', 'recipient').distinct()
         
+    def get_unique_share_records_with_access(self):
+        """
+        Return unique ShareRecord queryset-like result: 
+        one record per contact (first one encountered).
+        """
+        qs = self.get_share_records_with_access()
+
+        seen_contacts = set()
+        unique_records = []
+
+        for record in qs:
+            if record.contact.id not in seen_contacts:
+                seen_contacts.add(record.contact.id)
+                unique_records.append(record)
+
+        return unique_records
+    
     class Meta:
         ordering = ['-created_at']
         
@@ -426,6 +443,23 @@ class FolderRecord(models.Model):
             Q(folder__in=parents),
             is_deleted=False
         ).select_related('contact', 'recipient').distinct()
+
+    def get_unique_share_records_with_access(self):
+        """
+        Return unique ShareRecord queryset-like result: 
+        one record per contact (first one encountered).
+        """
+        qs = self.get_share_records_with_access()
+
+        seen_contacts = set()
+        unique_records = []
+
+        for record in qs:
+            if record.contact.id not in seen_contacts:
+                seen_contacts.add(record.contact.id)
+                unique_records.append(record)
+
+        return unique_records
 
     @property
     def display_size(self):
@@ -596,7 +630,7 @@ class ShareRecord(models.Model):
             slug_candidate = generate_slug(self.folder, is_folder=True)
             
         elif self.file:
-            slug_candidate = generate_slug(self.file, is_folder=True)
+            slug_candidate = generate_slug(self.file)
         
         if not self.pk:
             # New record → always generate slug
