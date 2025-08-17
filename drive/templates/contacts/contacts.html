@@ -99,7 +99,11 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold">
-                            Contact
+                            {% if group %}
+                            <a href="{% url 'my-contacts' %}">Contacts</a> <span class="text-[#027991]">/{{group.name}}</span>
+                            {% else %}
+                            <span>Contacts</span>
+                            {% endif %}
                         </th>
                     </tr>
                 </thead>
@@ -147,7 +151,8 @@
 
             <dialog id="editContactDialog"
                 class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
-                <form method="post" action="{% url 'edit-contact' 0 %}">
+                <form method="post" action="{% url 'edit-contact' 0 %}"  
+                    data-action-template="{% url 'edit-contact' 0 %}">
                     {% csrf_token %}
 
                     <div class="space-y-2">

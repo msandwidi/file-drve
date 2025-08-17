@@ -1319,7 +1319,7 @@ def remove_contact_from_shared_item_view(request, share_id):
         all_access = share.file.get_share_records_with_access()
         
         other_user_access = all_access.filter(
-            contact=share.contact,
+            Q(contact=share.contact) | Q(contact__email=share.contact.email)
         )
         
         if other_user_access:
@@ -1339,7 +1339,7 @@ def remove_contact_from_shared_item_view(request, share_id):
         all_access = share.folder.get_share_records_with_access()
         
         other_user_access = all_access.filter(
-            contact=share.contact,
+            Q(contact=share.contact) | Q(contact__email=share.contact.email)
         )
         
         if other_user_access:
