@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahel Box | Dossier Partagé - {{share.folder.display_name}}{% endblock %}
+
+{% block content %}
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-[#027991] mb-4">Dossier Partagé</h1>
+
+<div class="flex items-center space-x-2">
+    <h1 class="text-md md:text-lg lg:text-xl font-semibold text-gray-500">
+        <a href="{% url 'my-box' %}?folder={{share.folder.slug}}" class="hover:text-[#027991]">
+            {{share.folder.display_name}}
+        </a>
+    </h1>
+</div>
+
+<div class="flex items-center space-x-2 mt-2">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+        class="size-6 text-gray-400">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+
+    <span>
+        <a href="{% url 'my-box' %}?dossier={{share.folder.slug}}" class="text-[#027991] hover:text-[#016073]">
+            home/{{share.folder.full_path}}
+        </a>
+    </span>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-2 mt-4">
+    <div class="space-y-4">
+        <div class="flex space-x-4">
+            <Button type="button"
+                class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full hover:bg-gray-50">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                </svg>
+
+                <h4 class="text-lg font-semibold">Copier le lien</h4>
+            </Button>
+        </div>
+
+        <div class="hidden lg:block">
+            <table class="border-b border-gray-300 w-full" id="file-table">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
+                            home/{{share.folder.full_path}}
+                        </th>
+                        <th class="w-[20%] md:w-[15%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
+                            Type
+                        </th>
+                        <th
+                            class="w-[20%] md:w-[15%] px-4 py-2 text-left text-md text-gray-600 font-semibold text-right">
+                            Taille
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
+
+
+                </tbody>
+            </table>
+
+      
+        </div>
+    </div>
+    <div class="min-w-0">
+
+    </div>
+
+</div>
+
+{% endblock %}

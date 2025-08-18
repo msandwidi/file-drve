@@ -78,7 +78,7 @@
         </div>
 
         <div class="flex space-x-4">
-            <Button type="button"
+            <Button type="button" id="copyShareFileLinkBtn"
                 class="shadow bg-white py-5 px-4 rounded-lg items-center flex space-x-4 w-full hover:bg-gray-50">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
@@ -88,11 +88,13 @@
 
                 <h4 class="text-lg font-semibold">Copier le lien</h4>
             </Button>
+
         </div>
 
         <div class="hidden lg:block">
             <!-- {% include 'partials/view-file.html' with file=file %} -->
         </div>
+
     </div>
     <div class="min-w-0">
         <!-- table wrapper (optional overflow) -->
@@ -247,6 +249,17 @@
         </div>
         {% endif %}
     </div>
-
+    <dialog id="copyShareFileLinkDialog"
+        class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
+        <div class="space-y-2">
+            <h5>Lien partagé</h5>
+            <textarea type="text" class="w-full border border-gray-300 px-3 py-2" 
+                readonly rows="3">http://127.0.0.1:8000/partages/{{file.slug}}</textarea>
+        </div>
+        <div class="mt-4">
+            <button type="button" id="closCcopyShareFileLinkBtn"
+                class="bg-[#027991] hover:bg-[#016073] text-white font-bold py-2 px-4 border border-black">Fermer</button>
+        </div>
+    </dialog>
 </div>
 {% endblock %}

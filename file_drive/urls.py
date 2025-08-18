@@ -22,4 +22,5 @@ urlpatterns = [
     path('', include('core.urls')),
     path('comptes/', include('users.urls')),
     path('mon-box/', include('drive.urls')),
+    path('partages/', include('share.urls')),
 ]

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'drive.apps.DriveConfig',
+    'share.apps.ShareConfig',
 ]
 
 MIDDLEWARE = [
@@ -147,6 +148,11 @@ LOGGING = {
             'propagate': False,
         },
         'drive': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'share': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,

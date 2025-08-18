@@ -7,11 +7,10 @@ from .models import (
     UserNotification
 )
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.http import FileResponse, HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from .utils import is_safe_filename, is_safe_foldername
-from django.views.decorators.http import require_POST
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
@@ -1638,10 +1637,11 @@ def all_notifications_view(request):
             user=request.user
         ).first()
         
-        # save read timestamp
-        notification.is_read = True
-        notification.read_at = timezone.now()
-        notification.save()
+        if notification and not notification.is_read:
+            # save read timestamp
+            notification.is_read = True
+            notification.read_at = timezone.now()
+            notification.save()
         
     notifications = UserNotification.objects.filter(
         is_deleted=False,

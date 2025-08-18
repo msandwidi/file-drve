@@ -38,6 +38,5 @@ urlpatterns = [
     path('contacts/<int:share_id>/remove-from-item', views.remove_contact_from_shared_item_view, name='remove-contact-from-item'),
 
     # notifications
-    path('notifications', views.all_notifications_view, name='my-notifications'),
-    
+    path('notifications', views.all_notifications_view, name='my-notifications'),    
 ]

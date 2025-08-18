@@ -3,8 +3,11 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.db.models import Q
 from django.db import models
+import logging
 import uuid
 import os
+
+logger = logging.getLogger(__name__)
 
 INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+' 
 RESERVED_NAMES = {'.', '..', 'con', 'nul', 'prn'}
@@ -530,10 +533,10 @@ class FolderRecord(models.Model):
         else:
             # Existing record → check if name changed
             original = type(self).objects.get(pk=self.pk)
-            if original.name != self.name:
+            if original and original.name != self.name:
                 self.slug = slug_candidate
             
-            if not original.is_deleted and self.is_deleted:
+            if original and not original.is_deleted and self.is_deleted:
                 # Mark related shares as deleted
                 self.shares.update(is_deleted=True, deleted_at=timezone.now())
 
@@ -580,6 +583,8 @@ class ShareRecord(models.Model):
     
     shared_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    
+    last_accessed_at = models.DateTimeField(null=True, blank=True)
     
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -635,14 +640,15 @@ class ShareRecord(models.Model):
         if not self.pk:
             # New record → always generate slug
             self.slug = slug_candidate
+            logger.info('creating slug for new share')
             
         else:
             # Existing record → check if name changed
             original = type(self).objects.get(pk=self.pk)
-            if original.file and original.file != self.file.name:
+            if original.file and original.file.name != self.file.name:
                 self.slug = slug_candidate
             
-            elif original.folder and original.folder != self.folder.name:
+            elif original.folder and original.folder.name != self.folder.name:
                 self.slug = slug_candidate
 
         super().save(*args, **kwargs)

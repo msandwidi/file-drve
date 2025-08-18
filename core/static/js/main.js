@@ -61,6 +61,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeSelectContactGroupBtn = document.getElementById('closeSelectContactGroupBtn');
   const selectContactGroupDialog = document.getElementById('selectContactGroupDialog');
 
+  const copyShareFileLinkBtn = document.getElementById('copyShareFileLinkBtn');
+  const closCcopyShareFileLinkBtn = document.getElementById('closCcopyShareFileLinkBtn');
+  const copyShareFileLinkDialog = document.getElementById('copyShareFileLinkDialog');
+
+  copyShareFileLinkBtn?.addEventListener('click', () => {
+    copyShareFileLinkDialog.showModal();
+  });
+
+  closCcopyShareFileLinkBtn?.addEventListener('click', () => {
+    copyShareFileLinkDialog.close();
+  });
+
   selectContactGroupBtn?.addEventListener('click', () => {
     selectContactGroupDialog.showModal();
   });

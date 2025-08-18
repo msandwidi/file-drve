@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahel Box | Fichier - {{share.file.display_name}}{% endblock %}
+
+{% block content %}
+
+<h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-[#027991] mb-4">Details de Fichier</h1>
+
+<div class="flex items-center space-x-2">
+    {% include 'partials/record-icon.html' with display_type_group=share.file.display_type_group %}
+    <h1 class="text-md md:text-lg lg:text-xl font-semibold text-gray-500">
+        <span>{{share.file.display_name}}</span>
+    </h1>
+</div>
+
+<div class="flex items-center space-x-2 mt-4 md:hidden">
+    <a href="#"
+        class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+        Copier
+    </a>
+
+    <a href="{% url 'download-shared-file' share.slug %}"
+        class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+        Telecharger
+    </a>
+
+    <a href="{% url 'delete-shared-file' share.slug %}"
+        class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
+        Suprimer
+    </a>
+</div>
+
+<div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
+    <div>
+        {% include 'partials/view-shared-file.html' with share=share %}
+    </div>
+    <div id="file-details" class="mb-4">
+        <table class="min-w-full border-b border-gray-300">
+            <thead class="bg-[#90caf9]">
+                <tr>
+                    <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
+                        <span>Information</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white">
+
+                <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            {% include 'partials/record-icon.html' with display_type_group=share.file.display_type_group %}
+                            <span>{{ share.file.display_name }}</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                            </svg>
+
+                            <span>{{share.file.display_size}}</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+
+                            <span>{{share.shared_at}}</span>
+                        </div>
+                    </td>
+                </tr>
+
+                 <tr class="shadow shadow-sm group">
+                    <td class="px-2 py-1 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+
+                            <span>{{share.file.user.username}}</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="shadow-sm group hidden md:table-row">
+                    <td class="px-2 py-2 text-sm text-gray-600">
+                        <div class="w-full space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                                <a href="#"
+                                    class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+                                    Copier
+                                </a>
+                                <a href="{% url 'download-shared-file' share.slug %}"
+                                    class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
+                                    Telecharger
+                                </a>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                                <a href="{% url 'delete-shared-file' share.slug %}"
+                                    class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
+                                    Supprimer
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+{% endblock %}
