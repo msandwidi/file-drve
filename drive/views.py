@@ -484,6 +484,13 @@ def delete_folder_view(request, slug):
     
     # soft delete non-empty folders
     delete_folder_and_contents(folder)
+
+    # delete direct shares
+    for share in folder.shares:
+        if not share.is_deleted:
+            share.is_deleted = True
+            share.deleted_at = timezone.now()
+            share.save()
     
     messages.success(request, 'Dossier supprimeé')
 
@@ -523,6 +530,13 @@ def delete_file_view(request, slug):
     file.deleted_at = timezone.now()
     file.shared_at = None
     file.save()
+
+    # delete direct shares
+    for share in file.shares:
+        if not share.is_deleted:
+            share.is_deleted = True
+            share.deleted_at = timezone.now()
+            share.save()
     
     messages.success(request, 'Fichier supprimé')
     
@@ -933,6 +947,7 @@ def restore_deleted_file_view(request, slug):
     # restore file
     file.is_deleted = False
     file.deleted_at = None
+    file.shared_at = None
     
     file.save()
     
@@ -942,6 +957,7 @@ def restore_deleted_file_view(request, slug):
         if folder.is_deleted:
             folder.is_deleted = False
             folder.deleted_at = None
+            folder.shared_at = None
             folder.save()
         folder = folder.parent
     
@@ -1234,7 +1250,7 @@ def add_contact_to_shared_item_view(request, contact_id):
 
     if file:
         
-        all_access = file.get_unique_share_records_with_access()
+        all_access = file.get_share_records_with_access()
         
         existing_record = all_access.filter(
             contact=contact,
@@ -1265,7 +1281,7 @@ def add_contact_to_shared_item_view(request, contact_id):
     
     elif folder:
         
-        all_access = folder.get_unique_share_records_with_access()
+        all_access = folder.get_share_records_with_access()
         
         existing_record = all_access.filter(
             contact=contact,
@@ -1560,7 +1576,7 @@ def add_contact_group_to_item_view(request):
     
     if file:
         
-        if len(file.get_share_records_with_access()) + contacts.count() > 99:
+        if len(file.get_unique_share_records_with_access()) + contacts.count() > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
@@ -1582,7 +1598,7 @@ def add_contact_group_to_item_view(request):
     
     elif folder:
         
-        if len(folder.get_share_records_with_access()) + contacts.count() > 99:
+        if len(folder.get_unique_share_records_with_access()) + contacts.count() > 99:
             messages.warning(request, 'Partage limité à 100 personnes')
             return redirect('share-file', file.slug)
         
@@ -1601,7 +1617,6 @@ def add_contact_group_to_item_view(request):
             messages.success(request, 'Contact ajouté')
 
         return redirect('share-folder', folder.slug)
-    
     
     messages.success(request, 'Groupe supprimé')
 

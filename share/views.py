@@ -204,6 +204,10 @@ def copy_shared_file_view(request, slug):
         return redirect('my-box')
     
     # copy file
-    file = None
+    new_record = share.copy_file_to_user(request.user)
     
-    return redirect('file-details', file.slug)
+    if new_record:
+        messages.success(request, 'Fichier copié')
+        return redirect('file-details', new_record.slug)
+    
+    return redirect('my-box')
