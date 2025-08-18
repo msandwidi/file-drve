@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from django.utils import timezone
 from django.db.models import Q
@@ -6,7 +7,6 @@ from django.db import models
 import logging
 import uuid
 import os
-
 logger = logging.getLogger(__name__)
 
 INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+' 
@@ -618,6 +618,34 @@ class ShareRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='shares'
     )
+
+    def copy_file_to_user(self, target_user):
+        """
+        Copy the shared file into target_user's account.
+        Only works if this ShareRecord points to a file.
+        """
+
+        original_file_record = self.file
+
+        if original_file_record and original_file_record.file:
+            # Open and read the actual file
+            with original_file_record.file.open("rb") as f:
+                file_content = ContentFile(
+                    f.read(),
+                    name=os.path.basename(original_file_record.file.name)
+                )
+
+            # Create a new FileRecord for the target user
+            new_file_record = FileRecord.objects.create(
+                name=original_file_record.name,
+                description=original_file_record.description,
+                user=target_user,
+                file=file_content
+            )
+
+            return new_file_record
+
+        return None
     
     def __str__(self):
         name = ''
