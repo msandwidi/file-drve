@@ -19,7 +19,7 @@
 
     <span>
         <a href="{% url 'my-box' %}?dossier={{share.folder.slug}}" class="text-[#027991] hover:text-[#016073]">
-            home/{{share.folder.full_path}}
+            box/{{share.folder.full_path}}
         </a>
     </span>
 </div>
@@ -54,7 +54,7 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
-                            home/{{share.folder.full_path}}
+                            box/{{share.folder.full_path}}
                         </th>
                         <th class="w-[20%] md:w-[15%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Type
@@ -73,7 +73,7 @@
                             <div>
                                 {% if item.type == 'folder' %}
 
-                                <a href="{% url 'shared-item-details' item.slug %}"
+                                <a href="{% url 'shared-folder-details' item.slug %}"
                                     class="text-sm flex space-x-2 items-center">
 
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"

@@ -1,5 +1,7 @@
 from drive.models import (
-    ShareRecord, 
+    ShareRecord,
+    FileRecord,
+    FolderRecord
 )
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
@@ -27,6 +29,7 @@ def shared_file_details(request, slug):
     Get share file details
     """
     
+    # find direct share
     share = ShareRecord.objects.filter(
         is_deleted=False,
         #recipient=request.user,
@@ -37,7 +40,7 @@ def shared_file_details(request, slug):
         Q(slug=slug) |
         Q(file__slug=slug) 
     ).first()
-    
+
     if not share:
         messages.warning(request, 'Fichier introuvable')
         return redirect('my-box')
@@ -65,7 +68,7 @@ def shared_folder_details(request, slug):
     else:
         page = 1
 
-    if page_size == 50:
+    if page_size > 50:
         page_size = 50
     
     share = ShareRecord.objects.filter(
@@ -112,7 +115,7 @@ def shared_item_details(request, slug):
         Q(folder__slug=slug, folder__is_deleted=False) |
         Q(file__slug=slug, file__is_deleted=False)
     ).first()
-    
+
     if not share:
         messages.warning(request, 'Lien introuvable')
         return redirect('my-box')

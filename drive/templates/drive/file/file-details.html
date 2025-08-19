@@ -39,10 +39,10 @@
     <span>
         {% if file.folder %}
         <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}" class="text-[#027991] hover:text-[#016073]">
-            home/{{file.folder.full_path}}
+            box/{{file.folder.full_path}}
         </a>
         {% else %}
-        <a href="{% url 'my-box' %}" class="text-[#027991] hover:text-[#016073]">home/</a>
+        <a href="{% url 'my-box' %}" class="text-[#027991] hover:text-[#016073]">box/</a>
         {% endif %}
     </span>
 </div>
@@ -142,11 +142,11 @@
                             <span>
                                 {% if file.folder %}
                                 <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}" class="hover:text-[#027991]">
-                                    home/{{file.folder.full_path}}
+                                    box/{{file.folder.full_path}}
                                 </a>
                                 {% else %}
                                 <a href="{% url 'my-box' %}?dossier={{file.folder.slug}}"
-                                    class="hover:text-[#027991]">home/</a>
+                                    class="hover:text-[#027991]">box/</a>
                                 {% endif %}
                             </span>
                         </div>

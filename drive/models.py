@@ -374,15 +374,25 @@ class FolderRecord(models.Model):
         return shares.filter(is_deleted = False)
     
     def get_all_parent_folders(self):
+        """
+        Get all parent folders that
+        are not deleted
+        """
         parents = []
         folder = self.parent
         
         while folder is not None and not folder.is_deleted:
             parents.append(folder)
             folder = folder.parent
+
         return parents
     
     def get_all_shared_parents(self):
+        """
+        Get all shared parent folders
+        that are not deleted
+        """
+
         parents = []
         folder = self.parent
         
@@ -390,6 +400,7 @@ class FolderRecord(models.Model):
             if folder.is_shared:
                 parents.append(folder)
             folder = folder.parent
+
         return parents
     
     def is_accessible_by_user(self, user):
@@ -397,6 +408,7 @@ class FolderRecord(models.Model):
         Check if the file is directly shared with the user
         or if any of its parent folders is shared with the user.
         """
+
         # 1. Check if file is directly shared with the user
         if self.shares.filter(is_deleted=False, contact__user=user).exists():
             return True
@@ -424,13 +436,18 @@ class FolderRecord(models.Model):
         ).distinct()
         
     def get_contacts_with_access(self):
+        """
+        Get contacts that have access
+        to this folder
+        """
+
         # Get all parent folders of the file
         parents = self.get_all_parent_folders()
 
         return ContactDetails.objects.filter(
-            Q(shared_items__folder=self) |                 # Directly shared with the file
-            Q(shared_items__folder__in=parents),        # Shared via any parent folder
-            shared_items__is_deleted=False              # Only non-deleted shares
+            Q(shared_items__folder=self) |       # Directly shared with the file
+            Q(shared_items__folder__in=parents), # Shared via any parent folder
+            shared_items__is_deleted=False       # Only non-deleted shares
         ).distinct()
     
     def get_share_records_with_access(self):
