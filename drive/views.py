@@ -486,7 +486,7 @@ def delete_folder_view(request, slug):
     delete_folder_and_contents(folder)
 
     # delete direct shares
-    for share in folder.shares:
+    for share in folder.shares.all():
         if not share.is_deleted:
             share.is_deleted = True
             share.deleted_at = timezone.now()
@@ -532,7 +532,7 @@ def delete_file_view(request, slug):
     file.save()
 
     # delete direct shares
-    for share in file.shares:
+    for share in file.shares.all():
         if not share.is_deleted:
             share.is_deleted = True
             share.deleted_at = timezone.now()
@@ -581,9 +581,9 @@ def share_folder_view(request, slug):
 
         return redirect('share-folder', slug=slug)
         
-    folders = folder.subfolders.all()
-    files = folder.files.all()
-        
+    folders = folder.subfolders.all().filter(is_deleted=False)
+    files = folder.files.all().filter(is_deleted=False)
+    
     items = list(folders) + list(files)
         
     paginator = Paginator(items, 20) 
@@ -1015,13 +1015,21 @@ def create_contact_view(request):
             is_deleted=False,
             user=request.user
         ).first()
+        
+        if not file:
+            messages.warning(request, 'Fichier introuvable')
+            return redirect('my-box')
 
     elif folder_slug:
         folder = FolderRecord.objects.filter(
-            slug=file_slug,
+            slug=folder_slug,
             is_deleted=False,
             user=request.user
         ).first()
+        
+        if not folder:
+            messages.warning(request, 'Dossier introuvable')
+            return redirect('my-box')
 
     if group_id:
         group = ContactGroup.objects.filter(

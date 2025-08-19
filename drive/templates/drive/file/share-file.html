@@ -253,7 +253,7 @@
         class="min-w-[400px] max-w-md p-6 rounded-md shadow-md w-full max-w-md fixed inset-0 m-auto bg-white">
         <div class="space-y-2">
             <h5>Lien partagé</h5>
-            <textarea type="text" class="w-full border border-gray-300 px-3 py-2" 
+            <textarea type="text" id="copyArea" class="w-full border border-gray-300 px-3 py-2" 
                 readonly rows="3">http://127.0.0.1:8000/partages/{{file.slug}}</textarea>
         </div>
         <div class="mt-4">
@@ -262,4 +262,12 @@
         </div>
     </dialog>
 </div>
+
+<script>
+    document.getElementById("copyArea").addEventListener("click", function() {
+        this.select();
+        navigator.clipboard.writeText(this.value);
+    });
+</script>
+
 {% endblock %}
