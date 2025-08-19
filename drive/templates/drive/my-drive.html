@@ -53,7 +53,7 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
-                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home</a>/ {% for path_data in  folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}"
+                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">box</a>/ {% for path_data in  folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}"
                                 class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %}
                                 /{%endif%}</a>{% endfor %}
                         </th>
@@ -239,10 +239,10 @@
                                         {% if folder.parent %}
                                         <a href="{% url 'my-box' %}?dossier={{folder.parent.slug}}"
                                             class="hover:text-[#027991]">
-                                            home/{{folder.parent.full_path}}
+                                            box/{{folder.parent.full_path}}
                                         </a>
                                         {% else %}
-                                        <a href="{% url 'my-box' %}" class="hover:text-[#027991]">home/</a>
+                                        <a href="{% url 'my-box' %}" class="hover:text-[#027991]">box/</a>
                                         {% endif %}
                                     </span>
                                 </div>

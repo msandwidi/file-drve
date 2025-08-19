@@ -107,7 +107,7 @@ def my_drive_view(request):
     else:
         page = 1
 
-    if page_size == 50:
+    if page_size > 50:
         page_size = 50
 
     folder = None
