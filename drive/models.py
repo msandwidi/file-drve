@@ -481,6 +481,32 @@ class FolderRecord(models.Model):
 
         return unique_records
 
+    def get_descendant_folders(self):
+        """
+        Get all descentant folders
+        """
+        
+        descendants = [self.id]
+        for subfolder in self.subfolders.all():
+            descendants.extend(subfolder.get_descendant_folders())
+            
+        return descendants
+
+    def contains_file_with_slug(self, slug):
+        """
+        Check if a folder or subfolder
+        contains a file with the provided slug
+        """
+        
+        folder_ids = self.get_descendant_folders()
+        
+        return FileRecord.objects.filter(
+            folder_id__in=folder_ids, 
+            slug=slug, 
+            is_deleted=False
+        ).exists()
+
+
     @property
     def display_size(self):
         """
@@ -629,7 +655,7 @@ class ShareRecord(models.Model):
     )
 
     folder = models.ForeignKey(
-        'FolderRecord',
+        FolderRecord,
         null=True,
         blank=True,
         on_delete=models.CASCADE,

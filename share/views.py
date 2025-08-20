@@ -29,24 +29,54 @@ def shared_file_details(request, slug):
     Get share file details
     """
     
-    # find direct share
-    share = ShareRecord.objects.filter(
-        is_deleted=False,
-        #recipient=request.user,
-        file__isnull=False,
-        file__is_deleted=False,
-        contact__is_deleted=False,
-    ).filter(
-        Q(slug=slug) |
-        Q(file__slug=slug) 
-    ).first()
+    file_slug = request.GET.get('file')
+    
+    file = None
+    folder = None
+    
+    if file_slug:
+        # find shared folder
+        share = ShareRecord.objects.filter(
+            is_deleted=False,
+            #recipient=request.user,
+            folder__isnull=False,
+            folder__is_deleted=False,
+            contact__is_deleted=False,
+        ).filter(
+            Q(slug=slug) |
+            Q(folder__slug=slug) 
+        ).first()
+        
+        if share and share.folder.contains_file_with_slug(file_slug):
+            file = FileRecord.objects.filter(slug=file_slug, is_deleted=False).first()
+            folder = file.folder
+            
+    else:
+        # find directly shared file
+        share = ShareRecord.objects.filter(
+            is_deleted=False,
+            #recipient=request.user,
+            file__isnull=False,
+            file__is_deleted=False,
+            contact__is_deleted=False,
+        ).filter(
+            Q(slug=slug) |
+            Q(file__slug=slug) 
+        ).first()
 
     if not share:
         messages.warning(request, 'Fichier introuvable')
         return redirect('my-box')
+    
+    if not file and share.file:
+        file = share.file
+    elif not folder and share.folder:
+        folder = share.folder
 
     return render(request, 'shared/file/file-details.html', {
         'share': share,
+        'file': file,
+        'folder': folder
     })
 
 @require_http_methods(['GET'])
