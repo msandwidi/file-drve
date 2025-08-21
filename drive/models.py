@@ -520,7 +520,22 @@ class FolderRecord(models.Model):
             is_deleted=False
         ).exists()
 
+    def get_parents_until_slug(self, target_slug):
+        """
+        Traverse upward through parent folders until a folder with slug == target_slug is found.
+        Returns a list of parent folders (including the matching one if found).
+        """
+        parents = []
+        folder = self.parent
 
+        while folder is not None and not folder.is_deleted:
+            parents.append(folder)
+            if folder.slug == target_slug:
+                break
+            folder = folder.parent
+
+        return parents
+    
     @property
     def display_size(self):
         """

@@ -90,6 +90,7 @@ def shared_folder_details(request, slug):
     file_slug = request.GET.get('file')
     folder = None
     file = None
+    folder_parents=list()
     
     if folder_slug and share.folder.contains_folder_with_slug(folder_slug):
         logger.info('finding subfolder of shared folder...')
@@ -101,6 +102,8 @@ def shared_folder_details(request, slug):
         if not folder:
             logger.warning('unable to find selected folder ' + folder_slug)
             return redirect('shared-folder-details', slug)
+        
+        folder_parents = folder.get_parents_until_slug(slug)
         
     if file_slug and share.folder.contains_file_with_slug(file_slug):
         logger.info('finding file of shared folder...')
@@ -120,6 +123,7 @@ def shared_folder_details(request, slug):
         logger.info('Getting content of shared folder...')
         folders = share.folder.subfolders.all().filter(is_deleted=False)
         files = share.folder.files.all().filter(is_deleted=False)
+        folder = share.folder
         
     else:   
         logger.info('Getting content of selected folder...')
@@ -135,7 +139,8 @@ def shared_folder_details(request, slug):
         'share': share,
         'items': page_obj,
         'folder': folder,
-        'file': file
+        'file': file,
+        'folder_parents': folder_parents
     })
 
 @require_http_methods(['GET'])
@@ -175,30 +180,45 @@ def view_shared_file_content_view(request, slug):
     """
     
     share = ShareRecord.objects.filter(
-        slug=slug,
         is_deleted=False,
         contact__is_deleted=False,
-        file__isnull=False,
-        file__is_deleted=False,    
+        #recipient=request.user,
+    ).filter(
+        Q(slug=slug) |
+        Q(folder__slug=slug, folder__is_deleted=False) |
+        Q(file__slug=slug, file__is_deleted=False)
     ).first()
     
-    if not share or not share.file:
+    if not share:
         messages.warning(request, 'Lien introuvable')
         return redirect('my-box')
     
+    file_slug = request.GET.get('file')
+    file = None
+
+    if file_slug and share.folder.contains_file_with_slug(file_slug):
+        file = FileRecord.objects.filter(
+            slug=file_slug, 
+            is_deleted=False,
+        ).first()
+
+    if not file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('shared-folder-details', share.slug)
+    
     # Determine content type
-    mime_type, _ = mimetypes.guess_type(share.file.name)
+    mime_type, _ = mimetypes.guess_type(file.name)
     if not mime_type:
         mime_type = 'application/octet-stream'
 
-    response = FileResponse(share.file.file.open('rb'), content_type=mime_type)
+    response = FileResponse(file.file.open('rb'), content_type=mime_type)
     
     # update metadata
     share.last_accessed_at = timezone.now()
     share.save()
 
     # Set inline disposition
-    response['Content-Disposition'] = f'inline; filename="{share.file.name}"'
+    response['Content-Disposition'] = f'inline; filename="{file.name}"'
     response["X-Frame-Options"] = "SAMEORIGIN"
     return response
 
@@ -210,25 +230,36 @@ def download_shared_file_view(request, slug):
     """
     
     share = ShareRecord.objects.filter(
-        slug=slug,
         is_deleted=False,
         contact__is_deleted=False,
-        file__isnull=False,
-        file__is_deleted=False,    
+        #recipient=request.user,
+    ).filter(
+        Q(slug=slug) |
+        Q(folder__slug=slug, folder__is_deleted=False) |
+        Q(file__slug=slug, file__is_deleted=False)
     ).first()
-    
-    if not share or not share.file:
+        
+    if not share:
         messages.warning(request, 'Lien introuvable')
         return redirect('my-box')
     
-    if not share.file or not share.file.file:
+    file_slug = request.GET.get('file')
+    file = None
+
+    if file_slug and share.folder.contains_file_with_slug(file_slug):
+        file = FileRecord.objects.filter(
+            slug=file_slug, 
+            is_deleted=False,
+        ).first()
+
+    if not file or not file.file:
         messages.warning(request, 'Fichier introuvable')
-        return redirect('my-box')
+        return redirect('shared-folder-details', share.slug)
     
     share.last_accessed_at = timezone.now()
     share.save()
 
-    return FileResponse(share.file.file.open('rb'), as_attachment=True, filename=share.file.name)
+    return FileResponse(file.file.open('rb'), as_attachment=True, filename=file.name)
 
 @require_http_methods(['GET'])
 @login_required

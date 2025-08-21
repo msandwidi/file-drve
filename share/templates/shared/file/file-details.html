@@ -38,14 +38,14 @@
 
 <div class="grid md:grid-cols-[3fr_1fr] sm:grid-cols-1 gap-2 mt-4">
     <div>
-        {% include 'partials/view-shared-file.html' with share=share %}
+        {% include 'partials/view-shared-file.html' with share=share file=share.file %}
     </div>
     <div id="file-details" class="mb-4">
         <table class="min-w-full border-b border-gray-300">
             <thead class="bg-[#ffd500]">
                 <tr>
                     <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
-                        <span>Information</span>
+                        <span>Information du Fichier</span>
                     </th>
                 </tr>
             </thead>
@@ -54,7 +54,7 @@
                 <tr class="shadow shadow-sm group">
                     <td class="px-2 py-1 text-sm text-gray-600">
                         <div class="flex items-center space-x-2">
-                            {%include 'partials/record-icon.html' with display_type_group=share.file.display_type_group%}
+                            {%include 'partials/record-icon.html' with display_type_group=share.file.display_type_group %}
                             <span>{{ share.file.display_name }}</span>
                         </div>
                     </td>

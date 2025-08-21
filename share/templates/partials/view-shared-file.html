@@ -1,7 +1,7 @@
-{% if share.file.display_type_group == "image" %}
-<img src="{% url 'view-shared-file' share.slug %}" alt="{{ share.file.display_name }}">
-{% elif share.file.display_type_group == "pdf" %}
-<iframe src="{% url 'view-shared-file' share.slug %}" width="100%" height="600px"></iframe>
+{% if file.display_type_group == "image" %}
+<img src="{% url 'view-shared-file' share.slug %}?file={{file.slug}}" alt="{{ file.display_name }}">
+{% elif file.display_type_group == "pdf" %}
+<iframe src="{% url 'view-shared-file' share.slug %}?file={{file.slug}}" width="100%" height="600px"></iframe>
 {% else %}
 <div
     class="flex flex-col items-center justify-center w-full border border-[#027991] py-6 bg-white text-center space-y-4">
@@ -9,7 +9,7 @@
         Ce fichier ne peut pas être affiché pour le moment. Veuillez cliquer sur le bouton ci-dessous pour le télécharger.
     </p>
 
-    <a href="{% url 'view-shared-file' share.slug %}" target="_blank"
+    <a href="{% url 'view-shared-file' share.slug %}?file={{file.slug}}" target="_blank"
         class="border border-[#027991] text-white bg-[#027991] hover:bg-[#016073] py-2 px-4 font-semibold">
         Ouvrir le fichier
     </a>
