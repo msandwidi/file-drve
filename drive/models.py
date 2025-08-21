@@ -505,6 +505,20 @@ class FolderRecord(models.Model):
             slug=slug, 
             is_deleted=False
         ).exists()
+        
+    def contains_folder_with_slug(self, slug):
+        """
+        Check if a folder or subfolder
+        contains a folder with the provided slug
+        """
+        
+        folder_ids = self.get_descendant_folders()
+        
+        return FolderRecord.objects.filter(
+            id__in=folder_ids, 
+            slug=slug, 
+            is_deleted=False
+        ).exists()
 
 
     @property

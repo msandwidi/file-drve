@@ -73,7 +73,7 @@
                             <div>
                                 {% if item.type == 'folder' %}
 
-                                <a href="{% url 'shared-folder-details' item.slug %}?share={{share.slug}}"
+                                <a href="{% url 'shared-folder-details' share.slug %}?folder={{item.slug}}"
                                     class="text-sm flex space-x-2 items-center">
 
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -87,7 +87,7 @@
 
                                 {% else %}
 
-                                <a href="{% url 'shared-item-details' item.slug %}?share={{share.slug}}"
+                                <a href="{% url 'shared-folder-details' share.slug %}?file={{item.slug}}&{% if folder %}folder={{folder.slug}}{% endif %}"
                                     class="text-sm flex space-x-2 items-center">
 
                                     {% include 'partials/record-icon.html' with display_type_group=item.display_type_group %}
@@ -151,14 +151,23 @@
                 <tr class="shadow shadow-sm group">
                     <td class="px-2 py-1 text-sm text-gray-600">
                         <div class="flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="h-4 w-4 shrink-0">
+                            {% if file %}
+                            {%include 'partials/record-icon.html' with display_type_group=file.display_type_group%}
+                            {% else %}
+                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0">
                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                    d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                             </svg>
+                            {% endif %}
+
+                            {% if file %}
+                            <span>{{ file.display_name }}</span>
+                            {% elif folder %}
+                            <span>{{ folder.display_name }}</span>
+                            {% else %}
                             <span>{{ share.folder.display_name }}</span>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -171,8 +180,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
                             </svg>
-
+                            {% if file %}
+                            <span>{{file.display_size}}</span>
+                            {% elif folder %}
+                            <span>{{folder.display_size}}</span>
+                            {% else %}
                             <span>{{share.folder.display_size}}</span>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

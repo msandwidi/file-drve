@@ -29,55 +29,23 @@ def shared_file_details(request, slug):
     Get share file details
     """
     
-    file_slug = request.GET.get('file')
-    
-    file = None
-    folder = None
-    
-    if file_slug:
-        # find shared folder
-        share = ShareRecord.objects.filter(
-            is_deleted=False,
-            #recipient=request.user,
-            folder__isnull=False,
-            folder__is_deleted=False,
-            contact__is_deleted=False,
-        ).filter(
-            Q(slug=slug) |
-            Q(folder__slug=slug) 
-        ).first()
-        
-        if share and share.folder.contains_file_with_slug(file_slug):
-            file = FileRecord.objects.filter(slug=file_slug, is_deleted=False).first()
-            folder = file.folder
-            
-    else:
-        # find directly shared file
-        share = ShareRecord.objects.filter(
-            is_deleted=False,
-            #recipient=request.user,
-            file__isnull=False,
-            file__is_deleted=False,
-            contact__is_deleted=False,
-        ).filter(
-            Q(slug=slug) |
-            Q(file__slug=slug) 
-        ).first()
+    share = ShareRecord.objects.filter(
+        is_deleted=False,
+        #recipient=request.user,
+        file__isnull=False,
+        file__is_deleted=False,
+        contact__is_deleted=False,
+    ).filter(
+        Q(slug=slug) |
+        Q(file__slug=slug) 
+    ).first()
 
     if not share:
+        logger.warning('file share not found')
         messages.warning(request, 'Fichier introuvable')
         return redirect('my-box')
     
-    if not file and share.file:
-        file = share.file
-    elif not folder and share.folder:
-        folder = share.folder
-
-    return render(request, 'shared/file/file-details.html', {
-        'share': share,
-        'file': file,
-        'folder': folder
-    })
+    return render(request, 'shared/file/file-details.html', {'share': share})
 
 @require_http_methods(['GET'])
 @login_required
@@ -116,9 +84,48 @@ def shared_folder_details(request, slug):
         messages.warning(request, 'Dossier introuvable')
         return redirect('my-box')
     
-    folders = share.folder.subfolders.all().filter(is_deleted=False)
-    files = share.folder.files.all().filter(is_deleted=False)
+    logger.info('Share found')
     
+    folder_slug = request.GET.get('folder')
+    file_slug = request.GET.get('file')
+    folder = None
+    file = None
+    
+    if folder_slug and share.folder.contains_folder_with_slug(folder_slug):
+        logger.info('finding subfolder of shared folder...')
+        folder = FolderRecord.objects.filter(
+            is_deleted = False,
+            slug = folder_slug    
+        ).first()
+        
+        if not folder:
+            logger.warning('unable to find selected folder ' + folder_slug)
+            return redirect('shared-folder-details', slug)
+        
+    if file_slug and share.folder.contains_file_with_slug(file_slug):
+        logger.info('finding file of shared folder...')
+        file = FileRecord.objects.filter(
+            is_deleted = False,
+            slug = file_slug    
+        ).first()
+        
+        if not file:
+            logger.warning('unable to find selected file ' + file_slug)
+            return redirect('shared-folder-details', slug)
+        
+    folders = list()
+    files = list()
+    
+    if not folder:
+        logger.info('Getting content of shared folder...')
+        folders = share.folder.subfolders.all().filter(is_deleted=False)
+        files = share.folder.files.all().filter(is_deleted=False)
+        
+    else:   
+        logger.info('Getting content of selected folder...')
+        folders = folder.subfolders.all().filter(is_deleted=False)
+        files = folder.files.all().filter(is_deleted=False)
+        
     items = list(folders) + list(files)
         
     paginator = Paginator(items, page_size) 
@@ -126,7 +133,9 @@ def shared_folder_details(request, slug):
 
     return render(request, 'shared/folder/folder-details.html', {
         'share': share,
-        'items': page_obj
+        'items': page_obj,
+        'folder': folder,
+        'file': file
     })
 
 @require_http_methods(['GET'])
