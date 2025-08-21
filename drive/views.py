@@ -171,22 +171,24 @@ def my_drive_view(request):
         elif folder_slug == 'partages':
             # shared folders
             logger.info(f'fetching {folder_slug}...')
-
-            files = FileRecord.objects.filter(
-                user=request.user,
+            
+            shared_files = ShareRecord.objects.filter(
                 is_deleted=False,
+                file__isnull=False,             
+                file__is_deleted=False,    
+                file__user=request.user,
             )
             
-            files = [file for file in files if file.is_shared]
-
-            # shared folders
-            folders = FolderRecord.objects.filter(
+            shared_folder = ShareRecord.objects.filter(
                 is_deleted=False,
-                user=request.user,
+                folder__isnull=False,
+                folder__is_deleted=False,    
+                folder__user=request.user,
             )
-            
-            folders = [folder for folder in folders if folder.is_shared]
-            
+
+            files = [share.file for share in shared_files]
+            folders = [share.folder for share in shared_folder]
+
         elif folder_slug == 'partages-avec-moi':
             # files shared with me
             logger.info(f'fetching {folder_slug}...')
