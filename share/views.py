@@ -8,10 +8,11 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.contrib import messages
 from core.utils import is_valid_int
 from django.utils import timezone
+from django.urls import reverse
 from django.db.models import Q
 import logging
 import mimetypes
@@ -20,6 +21,19 @@ import os
 import io
 
 logger = logging.getLogger(__name__)
+
+def add_folder_to_zip(zip_file, folder, base_path):
+    # Add files in this folder
+    for file_record in folder.files.filter(is_deleted=False):
+        if file_record.file:
+            file_path = file_record.file.path
+            arcname = os.path.join(base_path, file_record.name)
+            zip_file.write(file_path, arcname=arcname)
+
+    # Recurse into subfolders
+    for subfolder in folder.subfolders.filter(is_deleted=False):
+        sub_path = os.path.join(base_path, subfolder.name)
+        add_folder_to_zip(zip_file, subfolder, sub_path)
 
 # Create your views here
 @require_http_methods(['GET'])
@@ -246,7 +260,10 @@ def download_shared_file_view(request, slug):
     file_slug = request.GET.get('file')
     file = None
 
-    if file_slug and share.folder.contains_file_with_slug(file_slug):
+    if share.file:
+        file = share.file
+
+    elif file_slug and share.folder and share.folder.contains_file_with_slug(file_slug):
         file = FileRecord.objects.filter(
             slug=file_slug, 
             is_deleted=False,
@@ -263,20 +280,22 @@ def download_shared_file_view(request, slug):
 
 @require_http_methods(['GET'])
 @login_required
-def delete_shared_file_view(request, slug):
+def delete_shared_item_view(request, slug):
     """
-    Delete shared file
+    Delete shared file or folder
     """
-    
+
     share = ShareRecord.objects.filter(
-        slug=slug,
         is_deleted=False,
         contact__is_deleted=False,
-        file__isnull=False,
-        file__is_deleted=False,    
+        #recipient=request.user,
+    ).filter(
+        Q(slug=slug) |
+        Q(folder__slug=slug, folder__is_deleted=False) |
+        Q(file__slug=slug, file__is_deleted=False)
     ).first()
-    
-    if not share or not share.file:
+        
+    if not share:
         messages.warning(request, 'Lien introuvable')
         return redirect('my-box')
     
@@ -285,11 +304,11 @@ def delete_shared_file_view(request, slug):
     share.expires_at = timezone.now()
     share.save()
     
-    messages.success(request, 'Fichier supprimé')
+    messages.success(request, 'Partage supprimé')
     
     return redirect('my-box')
 
-@require_http_methods(['GET'])
+@require_http_methods(['POST'])
 @login_required
 def copy_shared_file_view(request, slug):
     """
@@ -297,22 +316,143 @@ def copy_shared_file_view(request, slug):
     """
     
     share = ShareRecord.objects.filter(
-        slug=slug,
         is_deleted=False,
         contact__is_deleted=False,
-        file__isnull=False,
-        file__is_deleted=False,    
+        #recipient=request.user,
+        file__isnull=False
+    ).filter(
+        Q(slug=slug) |
+        Q(file__slug=slug, file__is_deleted=False)
     ).first()
-    
-    if not share or not share.file:
+        
+    if not share:
         messages.warning(request, 'Lien introuvable')
         return redirect('my-box')
     
+    file_slug = request.GET.get('file')
+    file = None
+
+    if share.file:
+        file = share.file
+
+    elif file_slug and share.folder and share.folder.contains_file_with_slug(file_slug):
+        file = FileRecord.objects.filter(
+            slug=file_slug, 
+            is_deleted=False,
+        ).first()
+
+    if not file or not file.file:
+        messages.warning(request, 'Fichier introuvable')
+        return redirect('shared-folder-details', share.slug)
+    
     # copy file
-    new_record = share.copy_file_to_user(request.user)
+    new_record = file.copy_file_to_user(request.user)
     
     if new_record:
         messages.success(request, 'Fichier copié')
         return redirect('file-details', new_record.slug)
     
     return redirect('my-box')
+
+@require_http_methods(['POST'])
+@login_required
+def copy_shared_folder_view(request, slug):
+    """
+    Copy shared folder
+    """
+    
+    share = ShareRecord.objects.filter(
+        is_deleted=False,
+        contact__is_deleted=False,
+        #recipient=request.user,
+        folder__isnull=False
+    ).filter(
+        Q(slug=slug) |
+        Q(folder__slug=slug, folder__is_deleted=False)
+    ).first()
+        
+    if not share:
+        messages.warning(request, 'Lien introuvable')
+        return redirect('my-box')
+    
+    folder_slug = request.GET.get('folder')
+    folder = None
+
+    if not folder_slug or share.folder.slug == folder_slug:
+        folder = share.folder
+
+    elif folder_slug and share.folder.contains_folder_with_slug(folder_slug):
+        folder = FolderRecord.objects.filter(
+            slug=folder_slug, 
+            is_deleted=False,
+        ).first()
+
+    if not folder:
+        messages.warning(request, 'Dossier introuvable')
+        return redirect('shared-folder-details', share.slug)
+    
+    # copy file
+    new_folder = folder.copy_folder_to_user(request.user)
+
+    if new_folder:
+        messages.success(request, 'Dossier copié')
+        url = reverse('my-box')
+        return redirect(f"{url}?dossier={new_folder.slug}")
+    
+    return redirect('my-box')
+
+@require_http_methods(['GET'])
+@login_required
+def download_shared_folder_view(request, slug):
+    """
+    Download shared folder
+    """
+    
+    share = ShareRecord.objects.filter(
+        is_deleted=False,
+        contact__is_deleted=False,
+        #recipient=request.user,
+        folder__isnull=False
+    ).filter(
+        Q(slug=slug) |
+        Q(folder__slug=slug, folder__is_deleted=False)
+    ).first()
+        
+    if not share:
+        messages.warning(request, 'Lien introuvable')
+        return redirect('my-box')
+    
+    folder_slug = request.GET.get('folder')
+    folder = None
+
+    if not folder_slug or share.folder.slug == folder_slug:
+        folder = share.folder
+
+    elif folder_slug and share.folder.contains_folder_with_slug(folder_slug):
+        folder = FolderRecord.objects.filter(
+            slug=folder_slug, 
+            is_deleted=False,
+        ).first()
+
+    if not folder:
+        messages.warning(request, 'Dossier introuvable')
+        return redirect('shared-folder-details', share.slug)
+    
+    if folder.is_over_30mb():
+        # check folder size before download 
+        # if it is too large, create background 
+        # and redirect user to waiting page
+        
+        messages.warning(request, 'Dossier trop large')
+        return redirect('shared-folder-details', slug)
+    
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        add_folder_to_zip(zip_file, folder, base_path=folder.name)
+
+    zip_buffer.seek(0)
+
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{folder.name}.zip"'
+    return response

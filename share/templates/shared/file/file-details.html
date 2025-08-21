@@ -14,7 +14,7 @@
 </div>
 
 <div class="flex items-center space-x-2 mt-4 md:hidden">
-    <form method="post" action="{% url 'copy-shared-file' share.slug %}" class="w-full">
+    <form method="post" action="{% url 'copy-shared-file' share.slug %}?file={{share.file.slug}}" class="w-full">
         {% csrf_token %}
         <button type="submit"
             class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
@@ -22,12 +22,12 @@
         </button>
     </form>
 
-    <a href="{% url 'download-shared-file' share.slug %}"
+    <a href="{% url 'download-shared-file' share.slug %}?file={{share.file.slug}}"
         class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
         Telecharger
     </a>
 
-    <form method="post" action="{% url 'delete-shared-file' share.slug %}" class="w-full">
+    <form method="post" action="{% url 'delete-shared-file' share.slug %}?file={{share.file.slug}}" class="w-full">
         {% csrf_token %}
         <button type="submit"
             class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
@@ -45,7 +45,7 @@
             <thead class="bg-[#ffd500]">
                 <tr>
                     <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
-                        <span>Information du Fichier</span>
+                        <span>Détails du Fichier</span>
                     </th>
                 </tr>
             </thead>
@@ -105,7 +105,7 @@
                 <tr class="shadow-sm group hidden md:table-row">
                     <td class="px-2 py-2 text-sm text-gray-600">
                         <div class="w-full space-y-3">
-                            <form action="{% url 'copy-shared-file' share.slug %}"
+                            <form action="{% url 'copy-shared-file' share.slug %}?file={{share.file.slug}}"
                                 class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
                                 {% csrf_token %}
                                 <button type="submit"
@@ -113,13 +113,13 @@
                                     Copier
                                 </button>
 
-                                <a href="{% url 'download-shared-file' share.slug %}"
+                                <a href="{% url 'download-shared-file' share.slug %}?file={{share.file.slug}}"
                                     class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
                                     Telecharger
                                 </a>
                             </form>
 
-                            <form action="{% url 'delete-shared-file' share.slug %}" class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                            <form action="{% url 'delete-shared-item' share.slug %}?file={{share.file.slug}}" class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
                                 {% csrf_token %}
                                 <button type="submit"
                                     class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">

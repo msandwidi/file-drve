@@ -285,6 +285,35 @@ class FileRecord(models.Model):
 
         return unique_records
     
+
+    def copy_file_to_user(self, target_user):
+        """
+        Copy the file into target_user's account
+        """
+
+        original_file_record = self
+
+        if original_file_record and original_file_record.file:
+            # Open and read the actual file
+            with original_file_record.file.open("rb") as f:
+                file_content = ContentFile(
+                    f.read(),
+                    name=os.path.basename(original_file_record.file.name)
+                )
+
+            # Create a new FileRecord for the target user
+            new_file_record = FileRecord.objects.create(
+                name=f"{original_file_record.name} - copie {timezone.now().strftime("%d-%m-%Y %H:%M")}",
+                description=original_file_record.description,
+                user=target_user,
+                file=file_content
+            )
+
+            return new_file_record
+
+        return None
+    
+
     class Meta:
         ordering = ['-created_at']
         
@@ -535,6 +564,43 @@ class FolderRecord(models.Model):
             folder = folder.parent
 
         return parents
+    
+    def copy_folder_to_user(self, target_user, parent_copy=None):
+        """
+        Deep copy this folder, its subfolders, and all files into `target_user`'s account.
+        """
+
+        folder_name = self.name
+
+        if not parent_copy:
+            folder_name = f'{self.name} - copie {timezone.now().strftime("%d-%m-%Y %H:%M")}'
+
+        # Step 1: Copy the current folder
+        new_folder = FolderRecord.objects.create(
+            name=folder_name,
+            user=target_user,
+            parent=parent_copy
+        )
+
+        # Step 2: Copy all files in this folder
+        for file_record in self.files.filter(is_deleted=False):
+            with file_record.file.open("rb") as f:
+                file_content = ContentFile(
+                    f.read(),
+                    name=os.path.basename(file_record.file.name),
+                )
+            FileRecord.objects.create(
+                name=file_record.name,
+                user=target_user,
+                folder=new_folder,
+                file=file_content,
+            )
+
+        # Step 3: Recursively copy subfolders
+        for child in self.subfolders.filter(is_deleted=False):
+            child.copy_folder_to_user(target_user, parent_copy=new_folder)
+
+        return new_folder
     
     @property
     def display_size(self):

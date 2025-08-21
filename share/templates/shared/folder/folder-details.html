@@ -26,7 +26,7 @@
         Telecharger
     </a>
 
-    <form method="post" action="{% url 'delete-shared-folder' share.slug %}" class="w-full">
+    <form method="post" action="{% url 'delete-shared-item' share.slug %}" class="w-full">
         {% csrf_token %}
         <button type="submit"
             class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
@@ -151,9 +151,9 @@
                 <tr>
                     <th class="px-2 py-1 text-left text-sm font-semibold border-l-2 border-gray-200">
                         {% if file %}
-                        <span>Information du Fichier</span>
+                        <span>Détails du Fichier</span>
                         {% else %}
-                        <span>Information du Dossier</span>
+                        <span>Détails du Dossier</span>
                         {% endif %}
                     </th>
                 </tr>
@@ -235,21 +235,21 @@
                 <tr class="shadow-sm group hidden md:table-row">
                     <td class="px-2 py-2 text-sm text-gray-600">
                         <div class="w-full space-y-3">
-                            <form action="{% url 'copy-shared-folder' share.slug %}"
-                                class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                            <form action="{% url 'copy-shared-folder' share.slug %}?folder={{folder.slug}}"
+                                class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 gap-3" method="post">
                                 {% csrf_token %}
                                 <button type="submit"
                                     class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
                                     Copier
                                 </button>
 
-                                <a href="{% url 'download-shared-folder' share.slug %}"
+                                <a href="{% url 'download-shared-folder' share.slug %}?folder={{folder.slug}}"
                                     class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
                                     Telecharger
                                 </a>
                             </form>
 
-                            <form action="{% url 'delete-shared-folder' share.slug %}" class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                            <form action="{% url 'delete-shared-item' share.slug %}" class="flex flex-col sm:flex-row space-y-3 sm:space-y-0">
                                 {% csrf_token %}
                                 <button type="submit"
                                     class="w-full text-sm border border-red-500 text-red-500 px-3 py-1 bg-white hover:bg-red-50 shadow shadow-md text-center">
@@ -264,7 +264,7 @@
                     <td class="px-2 py-2 text-sm text-gray-600">
                         <div class="w-full py-2">
                             {% if file  %}
-                            <a href="{% url 'download-shared-folder' share.slug %}?file={{file.slug}}"
+                            <a href="{% url 'download-shared-file' share.slug %}?file={{file.slug}}"
                                 class="w-full text-sm border border-gray-600 text-gray-600 px-3 py-1 bg-white hover:bg-gray-50 shadow shadow-md text-center">
                                 Telecharger
                             </a>
