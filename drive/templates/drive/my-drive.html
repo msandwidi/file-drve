@@ -53,9 +53,8 @@
                 <thead class="bg-gray-200">
                     <tr>
                         <th class="px-4 py-2 text-left text-md text-gray-600 font-semibold border-l-2 border-gray-200">
-                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">box</a>/ {% for path_data in  folder.full_path_data %}<a href="{% url 'my-box' %}?dossier={{path_data.slug}}"
-                                class="hover:text-[#027991]">{{path_data.name}}{% if not forloop.last %}
-                                /{%endif%}</a>{% endfor %}
+                            <a href="{% url 'my-box' %}" class="hover:text-[#027991]">box</a> {% for path_data in  folder.full_path_data %} / <a href="{% url 'my-box' %}?dossier={{path_data.slug}}"
+                                class="hover:text-[#027991]">{{path_data.name}}</a>{% endfor %}
                         </th>
                         <th class="w-[20%] md:w-[12%] px-4 py-2 text-left text-md text-gray-600 font-semibold">
                             Type
@@ -540,9 +539,8 @@
                     </dialog>
 
                     <button type="button" id="addNewFolderBtn"
-                        class="text-sm border border-[#027991] text-[#027991] px-4 py-1 bg-white hover:bg-gray-50">Ajouter
-                        un
-                        dossier</button>
+                        class="text-sm bg-[#027991] text-white px-4 py-1 hover:bg-[#016073] font-semibold">
+                        Ajouter un dossier</button>
                 </div>
             </div>
 
