@@ -404,8 +404,10 @@ def view_file_content_view(request, slug):
 
     # Determine content type
     mime_type, _ = mimetypes.guess_type(file_record.name)
-    if not mime_type:
-        mime_type = 'application/octet-stream'
+    if not mime_type and file_record.name.lower().endswith(".pdf"):
+        mime_type = "application/pdf"
+    elif not mime_type:
+        mime_type = "application/octet-stream"
 
     response = FileResponse(file_record.file.open('rb'), content_type=mime_type)
     
