@@ -9,7 +9,7 @@ from .models import (
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
-from .utils import is_safe_filename, is_safe_foldername
+from .utils import is_safe_filename, is_safe_foldername, is_extension_safe
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
@@ -37,12 +37,6 @@ MAX_FILES_COUNT_PER_REQUEST = 20
 MAX_FILES_COUNT_PER_DAY = 80 # 80 files per 24h
 
 MAX_FILES_COUNT_PER_HOUR = 50 # 50 files per 1h
-
-FORBIDDEN_EXTENSIONS = {
-    '.exe', '.bat', '.cmd', '.sh', '.php', '.py', '.js', '.jar',
-    '.pl', '.cgi', '.vb', '.asp', '.aspx', '.html', '.htm', '.svg',
-    '.dll', '.iso', '.ps1', '.apk', '.chm'
-}
 
 def delete_folder_and_contents(folder):
     """
@@ -81,12 +75,6 @@ def add_folder_to_zip(zip_file, folder, base_path):
     for subfolder in folder.subfolders.filter(is_deleted=False):
         sub_path = os.path.join(base_path, subfolder.name)
         add_folder_to_zip(zip_file, subfolder, sub_path)
-
-def is_extension_safe(file):
-    name, ext = os.path.splitext(file.name)
-    if not ext:
-        return False
-    return ext.lower() not in FORBIDDEN_EXTENSIONS
 
 @require_http_methods(['GET', 'POST'])
 @login_required

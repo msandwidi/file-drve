@@ -7,13 +7,10 @@ from django.db import models
 import logging
 import uuid
 import os
+
 logger = logging.getLogger(__name__)
 
-INVALID_FOLDER_CHARS = r'[^a-zA-Z0-9 _\-]+' 
-RESERVED_NAMES = {'.', '..', 'con', 'nul', 'prn'}
-MAX_FOLDER_DEPTH = 10
 FOLDER_SIZE_30MB = 30 * 1024 * 1024
-MAX_FILENAME_LENGTH = 255
 MAX_SLUG_LENGTH = 255
 
 def generate_slug(instance, is_folder = False):

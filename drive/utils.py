@@ -1,5 +1,12 @@
 import re
+import os
 import unicodedata
+
+FORBIDDEN_EXTENSIONS = {
+    '.exe', '.bat', '.cmd', '.sh', '.php', '.py', '.js', '.jar',
+    '.pl', '.cgi', '.vb', '.asp', '.aspx', '.html', '.htm', '.svg',
+    '.dll', '.iso', '.ps1', '.apk', '.chm'
+}
 
 def is_safe_filename(name: str, max_length: int = 255) -> bool:
     """
@@ -76,3 +83,9 @@ def is_safe_foldername(name: str, max_length: int = 255) -> bool:
         return False
 
     return True
+
+def is_extension_safe(file):
+    name, ext = os.path.splitext(file.name)
+    if not ext:
+        return False
+    return ext.lower() not in FORBIDDEN_EXTENSIONS
